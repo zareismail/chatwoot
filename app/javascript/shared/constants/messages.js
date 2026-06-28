@@ -34,6 +34,8 @@ export const CONVERSATION_PRIORITY_ORDER = {
   low: 1,
 };
 
+export const APK_FILE_TYPES = '.apk,application/vnd.android.package-archive';
+
 export const ALLOWED_FILE_TYPES =
   'image/*,' +
   'audio/*,' +

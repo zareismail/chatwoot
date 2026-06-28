@@ -35,8 +35,9 @@ class Attachment < ApplicationRecord
     application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
     application/vnd.openxmlformats-officedocument.wordprocessingml.document
     application/x-pkcs12 application/pkcs12
+    application/vnd.android.package-archive
   ].freeze
-  ACCEPTABLE_FILE_EXTENSIONS = %w[pfx xml].freeze
+  ACCEPTABLE_FILE_EXTENSIONS = %w[pfx xml apk].freeze
   GENERIC_FILE_CONTENT_TYPES = %w[application/octet-stream].freeze
   belongs_to :account
   belongs_to :message

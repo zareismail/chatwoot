@@ -1,5 +1,6 @@
 import { getAllowedFileTypesByChannel } from '@chatwoot/utils';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
+import { APK_FILE_TYPES } from 'shared/constants/messages';
 
 export const DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE = 40;
 
@@ -67,8 +68,10 @@ export const isFileTypeAllowedForChannel = (file, options = {}) => {
         medium,
       });
 
-  // Convert to array and validate
-  const allowedTypesArray = allowedFileTypes.split(',').map(t => t.trim());
+  // Convert to array and validate (APK is allowed across all dashboard channels)
+  const allowedTypesArray = `${allowedFileTypes},${APK_FILE_TYPES}`
+    .split(',')
+    .map(t => t.trim());
   const fileExtension = `.${file.name.split('.').pop()}`;
 
   return allowedTypesArray.some(allowedType => {
