@@ -339,6 +339,13 @@ const menuItems = computed(() => {
           to: accountScopedRoute('home'),
         },
         {
+          name: 'Unread',
+          activeOn: ['conversation_through_unread'],
+          label: t('SIDEBAR.UNREAD_CONVERSATIONS'),
+          icon: 'i-lucide-mail-warning',
+          to: accountScopedRoute('conversation_unread'),
+        },
+        {
           name: 'Mentions',
           label: t('SIDEBAR.MENTIONED_CONVERSATIONS'),
           icon: 'i-lucide-at-sign',
