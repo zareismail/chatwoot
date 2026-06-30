@@ -11,7 +11,6 @@ import {
   isOnFoldersView,
 } from './helpers/actionHelpers';
 import messageReadActions from './actions/messageReadActions';
-import messageTranslateActions from './actions/messageTranslateActions';
 import * as Sentry from '@sentry/vue';
 import {
   handleVoiceCallCreated,
@@ -541,7 +540,6 @@ const actions = {
   },
 
   ...messageReadActions,
-  ...messageTranslateActions,
 };
 
 export default actions;

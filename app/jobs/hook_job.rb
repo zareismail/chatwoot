@@ -5,8 +5,6 @@ class HookJob < MutexApplicationJob
 
   INTEGRATION_PROCESSORS = {
     'slack' => :process_slack_integration,
-    'dialogflow' => :process_dialogflow_integration,
-    'google_translate' => :google_translate_integration,
     'leadsquared' => :process_leadsquared_integration_with_lock,
     'linear' => :process_linear_integration
   }.freeze
@@ -42,19 +40,6 @@ class HookJob < MutexApplicationJob
 
       ::UpdateSlackMessageJob.perform_later(message, hook)
     end
-  end
-
-  def process_dialogflow_integration(hook, event_name, event_data)
-    return unless ['message.created', 'message.updated'].include?(event_name)
-
-    Integrations::Dialogflow::ProcessorService.new(event_name: event_name, hook: hook, event_data: event_data).perform
-  end
-
-  def google_translate_integration(hook, event_name, event_data)
-    return unless ['message.created'].include?(event_name)
-
-    message = event_data[:message]
-    Integrations::GoogleTranslate::DetectLanguageService.new(hook: hook, message: message).perform
   end
 
   def process_linear_integration(hook, event_name, event_data)
