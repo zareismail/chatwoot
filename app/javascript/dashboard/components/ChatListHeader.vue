@@ -24,6 +24,7 @@ const emit = defineEmits([
   'resetFilters',
   'basicFilterChange',
   'filtersModal',
+  'sendBulkMessage',
 ]);
 
 const { uiSettings, updateUISettings } = useUISettings();
@@ -162,6 +163,14 @@ const toggleConversationLayout = () => {
       <SwitchLayout
         :is-on-expanded-layout="isOnExpandedLayout"
         @toggle="toggleConversationLayout"
+      />
+      <NextButton
+        v-tooltip.top-end="$t('BULK_MESSAGE.ENTRY_BUTTON')"
+        icon="i-lucide-megaphone"
+        slate
+        xs
+        faded
+        @click="emit('sendBulkMessage')"
       />
     </div>
   </div>

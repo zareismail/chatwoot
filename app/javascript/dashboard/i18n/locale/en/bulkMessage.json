@@ -1,0 +1,37 @@
+{
+  "BULK_MESSAGE": {
+    "ENTRY_BUTTON": "Send bulk message",
+    "FORM": {
+      "TITLE": "Send a bulk message",
+      "DESCRIPTION": "Send a message to multiple contacts at once by entering their phone numbers below. Each contact will receive the message in their existing conversation, or a new one will be created for them.",
+      "INBOX": {
+        "LABEL": "Inbox",
+        "PLACEHOLDER": "Select an inbox",
+        "ERROR": "Inbox is required"
+      },
+      "CONTENT": {
+        "LABEL": "Message",
+        "PLACEHOLDER": "Type your message here",
+        "ERROR": "Message is required"
+      },
+      "ATTACHMENT": {
+        "CHOOSE_FILE": "Attach files",
+        "UPLOADING": "Uploading...",
+        "HINT": "video, audio, PDF, documents"
+      },
+      "PHONE_NUMBERS": {
+        "LABEL": "Phone numbers",
+        "PLACEHOLDER": "Enter or paste phone numbers, separated by commas or new lines",
+        "ERROR": "At least one phone number is required",
+        "COUNT": "{count} phone number(s) entered"
+      },
+      "BUTTONS": {
+        "SEND": "Send"
+      },
+      "API": {
+        "SUCCESS_MESSAGE": "Bulk message is being sent",
+        "ERROR_MESSAGE": "Could not send the bulk message"
+      }
+    }
+  }
+}

@@ -17,6 +17,7 @@ import DeleteCustomViews from 'dashboard/routes/dashboard/customviews/DeleteCust
 import ConversationBulkActions from './widgets/conversation/conversationBulkActions/Index.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
 import ConversationResolveAttributesModal from 'dashboard/components-next/ConversationWorkflow/ConversationResolveAttributesModal.vue';
+import BulkMessageDialog from 'dashboard/components-next/BulkMessage/BulkMessageDialog.vue';
 
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAlert } from 'dashboard/composables';
@@ -72,6 +73,8 @@ const route = useRoute();
 const store = useStore();
 
 const resolveAttributesModalRef = ref(null);
+const bulkMessageDialogRef = ref(null);
+const openBulkMessageDialog = () => bulkMessageDialogRef.value?.open();
 
 const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
@@ -910,6 +913,7 @@ watch(conversationFilters, (newVal, oldVal) => {
       @filters-modal="onToggleAdvanceFiltersModal"
       @reset-filters="resetAndFetchData"
       @basic-filter-change="onBasicFilterChange"
+      @send-bulk-message="openBulkMessageDialog"
     />
 
     <TeleportWithDirection
@@ -999,5 +1003,6 @@ watch(conversationFilters, (newVal, oldVal) => {
       ref="resolveAttributesModalRef"
       @submit="handleResolveWithAttributes"
     />
+    <BulkMessageDialog ref="bulkMessageDialogRef" />
   </div>
 </template>
