@@ -319,18 +319,16 @@ export default {
         } else if (message.event === 'toggle-open') {
           this.$store.dispatch('appConfig/toggleWidgetOpen', message.isOpen);
 
-          const shouldEnterChatView =
-            ['home'].includes(this.$route.name) && message.isOpen;
+          const shouldShowMessageView =
+            ['home'].includes(this.$route.name) &&
+            message.isOpen &&
+            this.messageCount;
           const shouldShowHomeView =
             !message.isOpen &&
             ['unread-messages', 'campaigns'].includes(this.$route.name);
 
-          if (shouldEnterChatView) {
-            if (this.preChatFormEnabled && !this.conversationSize) {
-              this.router.replace({ name: 'prechat-form' });
-            } else {
-              this.router.replace({ name: 'messages' });
-            }
+          if (shouldShowMessageView) {
+            this.router.replace({ name: 'messages' });
           }
           if (shouldShowHomeView) {
             this.$store.dispatch('conversation/setUserLastSeen');
