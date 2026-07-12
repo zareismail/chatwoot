@@ -53,3 +53,35 @@
   font-display: swap;
   src: url('shared/assets/fonts/Inter/Inter-Bold.woff2') format('woff2');
 }
+
+@font-face {
+  font-family: 'Dana';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('widget/assets/fonts/Dana/dana-fanum-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Dana';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('widget/assets/fonts/Dana/dana-fanum-medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Dana';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('widget/assets/fonts/Dana/dana-fanum-demibold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Dana';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('widget/assets/fonts/Dana/dana-fanum-bold.woff2') format('woff2');
+}
