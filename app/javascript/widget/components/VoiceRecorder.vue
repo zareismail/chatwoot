@@ -56,6 +56,7 @@ export default {
     },
   },
   mounted() {
+    console.log('[VoiceRecorder] mounted, MediaRecorder:', typeof MediaRecorder !== 'undefined', 'mediaDevices.getUserMedia:', !!(navigator.mediaDevices?.getUserMedia));
     if (typeof MediaRecorder === 'undefined') {
       this.isSupported = false;
     }
@@ -74,7 +75,16 @@ export default {
       return types.find(type => MediaRecorder.isTypeSupported(type)) || '';
     },
     async startRecording() {
+      console.log('[VoiceRecorder] startRecording called, state:', this.recordingState);
       if (this.recordingState !== 'idle') return;
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        console.error('[VoiceRecorder] navigator.mediaDevices.getUserMedia not available (requires HTTPS or localhost)');
+        this.errorMessage = this.$t('VOICE_RECORDER.UNSUPPORTED');
+        this.recordingState = 'error';
+        this.$emit('recording-state-changed', false);
+        return;
+      }
 
       try {
         this.recordedChunks = [];
@@ -82,15 +92,19 @@ export default {
         this.errorMessage = '';
 
         const mimeType = this.determineMimeType();
+        console.log('[VoiceRecorder] mimeType:', mimeType);
+        console.log('[VoiceRecorder] calling getUserMedia...');
 
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('[VoiceRecorder] getUserMedia succeeded, tracks:', stream.getAudioTracks().length);
         this.stream = stream;
 
         const options = mimeType ? { mimeType } : {};
         this.mediaRecorder = new MediaRecorder(stream, options);
         this.mediaRecorder.ondataavailable = this.handleDataAvailable;
         this.mediaRecorder.onstop = this.handleRecordingStop;
-        this.mediaRecorder.onerror = () => {
+        this.mediaRecorder.onerror = (e) => {
+          console.error('[VoiceRecorder] MediaRecorder error:', e);
           this.errorMessage = this.$t('VOICE_RECORDER.ERROR');
           this.recordingState = 'denied';
           this.$emit('recording-state-changed', false);
@@ -98,10 +112,12 @@ export default {
         };
 
         this.mediaRecorder.start();
+        console.log('[VoiceRecorder] recording started');
         this.recordingState = 'recording';
         this.$emit('recording-state-changed', true);
         this.startTimer();
       } catch (err) {
+        console.error('[VoiceRecorder] error:', err.name, err.message);
         if (
           err.name === 'NotAllowedError' ||
           err.name === 'PermissionDeniedError'
