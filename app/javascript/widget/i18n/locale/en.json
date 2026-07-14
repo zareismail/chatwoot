@@ -154,5 +154,14 @@
   },
   "FOOTER_REPLY_TO": {
     "REPLY_TO": "Replying to:"
+  },
+  "VOICE_RECORDER": {
+    "START": "Start recording",
+    "STOP": "Stop recording",
+    "CANCEL": "Cancel recording",
+    "PERMISSION_DENIED": "Microphone access was denied. Please allow microphone access and try again.",
+    "ERROR": "Recording failed. Please try again.",
+    "UNSUPPORTED": "Voice recording is not supported in your browser.",
+    "LOAD_ERROR": "Unable to load audio. Please try again later."
   }
 }

@@ -4,6 +4,7 @@ import { mapGetters } from 'vuex';
 
 import ChatAttachmentButton from 'widget/components/ChatAttachment.vue';
 import ChatSendButton from 'widget/components/ChatSendButton.vue';
+import VoiceRecorder from 'widget/components/VoiceRecorder.vue';
 import { useAttachments } from '../composables/useAttachments';
 import FluentIcon from 'shared/components/FluentIcon/Index.vue';
 import ResizableTextArea from 'shared/components/ResizableTextArea.vue';
@@ -20,6 +21,7 @@ export default {
     EmojiPicker,
     FluentIcon,
     ResizableTextArea,
+    VoiceRecorder,
   },
   props: {
     onSendMessage: {
@@ -48,6 +50,7 @@ export default {
       userInput: '',
       showEmojiPicker: false,
       isFocused: false,
+      isVoiceRecording: false,
     };
   },
 
@@ -59,6 +62,9 @@ export default {
     }),
     showAttachment() {
       return this.canHandleAttachments && this.userInput.length === 0;
+    },
+    showVoiceButton() {
+      return this.showAttachment;
     },
     showSendButton() {
       return this.userInput.length > 0;
@@ -122,6 +128,9 @@ export default {
     onTypingOn() {
       this.toggleTyping('on');
     },
+    onVoiceRecordingStateChange(isRecording) {
+      this.isVoiceRecording = isRecording;
+    },
     toggleTyping(typingStatus) {
       this.$store.dispatch('conversation/toggleUserTyping', { typingStatus });
     },
@@ -155,13 +164,18 @@ export default {
       @blur="onBlur"
     />
     <div class="relative flex items-center ltr:pl-2 rtl:pr-2">
+      <VoiceRecorder
+        :can-show-mic="showVoiceButton && !isVoiceRecording"
+        :on-send-attachment="onSendAttachment"
+        @recording-state-changed="onVoiceRecordingStateChange"
+      />
       <ChatAttachmentButton
-        v-if="showAttachment"
+        v-if="showAttachment && !isVoiceRecording"
         class="text-n-slate-12"
         :on-attach="onSendAttachment"
       />
       <button
-        v-if="shouldShowEmojiPicker && hasEmojiPickerEnabled"
+        v-if="shouldShowEmojiPicker && hasEmojiPickerEnabled && !isVoiceRecording"
         class="flex items-center justify-center min-h-8 min-w-8"
         :aria-label="$t('EMOJI.ARIA_LABEL')"
         @click="toggleEmojiPicker"
@@ -183,7 +197,7 @@ export default {
         @keydown.esc="hideEmojiPicker"
       />
       <ChatSendButton
-        v-if="showSendButton"
+        v-if="showSendButton && !isVoiceRecording"
         :color="widgetColor"
         @click="handleButtonClick"
       />

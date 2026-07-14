@@ -3,6 +3,7 @@ import UserMessageBubble from 'widget/components/UserMessageBubble.vue';
 import MessageReplyButton from 'widget/components/MessageReplyButton.vue';
 import ImageBubble from 'widget/components/ImageBubble.vue';
 import VideoBubble from 'widget/components/VideoBubble.vue';
+import AudioBubble from 'widget/components/AudioBubble.vue';
 import FluentIcon from 'shared/components/FluentIcon/Index.vue';
 import FileBubble from 'widget/components/FileBubble.vue';
 import { messageStamp } from 'shared/helpers/timeHelper';
@@ -20,6 +21,7 @@ export default {
     MessageReplyButton,
     ImageBubble,
     VideoBubble,
+    AudioBubble,
     FileBubble,
     FluentIcon,
     ReplyToChip,
@@ -145,10 +147,17 @@ export default {
                 />
 
                 <VideoBubble
-                  v-if="attachment.file_type === 'video' && !hasVideoError"
+                  v-else-if="attachment.file_type === 'video' && !hasVideoError"
                   :url="attachment.data_url"
                   :readable-time="readableTime"
                   @error="onVideoLoadError"
+                />
+
+                <AudioBubble
+                  v-else-if="attachment.file_type === 'audio'"
+                  :url="attachment.data_url"
+                  :is-user-bubble="true"
+                  :widget-color="widgetColor"
                 />
 
                 <FileBubble
