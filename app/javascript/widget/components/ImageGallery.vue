@@ -53,23 +53,16 @@ const onClose = () => {
   emit('close');
 };
 
-const onDownload = async () => {
+const onDownload = () => {
   if (!currentImage.value) return;
   const url = currentImage.value.data_url;
-  try {
-    const response = await fetch(url, { mode: 'cors' });
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = url.split('/').pop() || 'image';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
-  } catch {
-    window.open(url, '_blank');
-  }
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.download = url.split('/').pop() || 'image';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 };
 
 const handleKeydown = e => {
