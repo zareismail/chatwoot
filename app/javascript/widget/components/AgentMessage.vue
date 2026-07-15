@@ -159,6 +159,9 @@ export default {
     onVideoLoadError() {
       this.hasVideoError = true;
     },
+    onOpenGallery(url) {
+      emitter.emit(BUS_EVENTS.OPEN_GALLERY, url);
+    },
     toggleReply() {
       emitter.emit(BUS_EVENTS.TOGGLE_REPLY_TO_MESSAGE, this.message);
     },
@@ -221,6 +224,7 @@ export default {
                   :thumb="attachment.data_url"
                   :readable-time="readableTime"
                   @error="onImageLoadError"
+                  @open-gallery="onOpenGallery"
                 />
 
                 <VideoBubble

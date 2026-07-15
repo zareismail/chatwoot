@@ -5,32 +5,43 @@ export default {
     thumb: { type: String, default: '' },
     readableTime: { type: String, default: '' },
   },
-  emits: ['error'],
+  emits: ['error', 'openGallery'],
   methods: {
     onImgError() {
       this.$emit('error');
+    },
+    onOpenGallery() {
+      this.$emit('openGallery', this.url);
     },
   },
 };
 </script>
 
 <template>
-  <a
-    :href="url"
-    target="_blank"
-    rel="noreferrer noopener nofollow"
-    class="image"
-  >
-    <div class="wrap">
+  <div class="image">
+    <a
+      :href="url"
+      target="_blank"
+      rel="noreferrer noopener nofollow"
+      class="wrap"
+    >
       <img :src="thumb" alt="Picture message" @error="onImgError" />
       <span class="time">{{ readableTime }}</span>
-    </div>
-  </a>
+    </a>
+    <button
+      class="absolute z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white/70 text-n-slate-11 hover:bg-white/90 transition-colors ltr:right-1 rtl:left-1 top-1 shadow-sm"
+      :title="$t('IMAGE_GALLERY.FULLSCREEN')"
+      @click.stop="onOpenGallery"
+    >
+      <i class="i-lucide-maximize size-3" />
+    </button>
+  </div>
 </template>
 
 <style lang="scss" scoped>
 .image {
   display: block;
+  position: relative;
 
   .wrap {
     position: relative;

@@ -152,6 +152,15 @@
       "CONTENT": "has shared a url"
     }
   },
+  "IMAGE_GALLERY": {
+    "FULLSCREEN": "View fullscreen",
+    "CLOSE": "Close",
+    "DOWNLOAD": "Download",
+    "ROTATE_CLOCKWISE": "Rotate clockwise",
+    "ROTATE_COUNTER_CLOCKWISE": "Rotate counter-clockwise",
+    "PREVIOUS": "Previous image",
+    "NEXT": "Next image"
+  },
   "FOOTER_REPLY_TO": {
     "REPLY_TO": "Replying to:"
   },

@@ -50,6 +50,21 @@ export const getters = {
       return hasNotSeen && isOutGoing;
     }).length;
   },
+  getAllImageAttachments: _state => {
+    return Object.values(_state.conversations).reduce((images, message) => {
+      if (message.attachments) {
+        message.attachments.forEach(attachment => {
+          if (attachment.file_type === 'image') {
+            images.push({
+              data_url: attachment.data_url,
+              message_id: message.id,
+            });
+          }
+        });
+      }
+      return images;
+    }, []);
+  },
   getUnreadTextMessages: (_state, _getters) => {
     const unreadCount = _getters.getUnreadMessageCount;
     const allMessages = [...Object.values(_state.conversations)];
