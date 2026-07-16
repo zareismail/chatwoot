@@ -33,6 +33,8 @@ const browserLanguage = computed(() =>
   getLanguageName(props.conversationAttributes.browser_language)
 );
 
+const deviceName = computed(() => props.conversationAttributes.browser?.device_name || '');
+
 const platformName = computed(() => {
   if (!browserInfo.value) return '';
   const { platform_name: name = '', platform_version: version = '' } =
@@ -66,6 +68,12 @@ const staticElements = computed(() =>
       content: browserName,
       title: 'CONTACT_PANEL.BROWSER',
       key: 'static-browser',
+      type: 'static_attribute',
+    },
+    {
+      content: deviceName,
+      title: 'CONTACT_PANEL.DEVICE',
+      key: 'static-device',
       type: 'static_attribute',
     },
     {
