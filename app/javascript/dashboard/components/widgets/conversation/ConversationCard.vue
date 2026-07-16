@@ -212,6 +212,8 @@ watch(
             :last-activity-timestamp="chat.timestamp"
             :created-at-timestamp="chat.created_at"
             :conversation-id="chat.id"
+            :contact-last-seen-at="chat.contact_last_seen_at"
+            :agent-last-seen-at="chat.agent_last_seen_at"
           />
         </span>
         <UnreadBadge

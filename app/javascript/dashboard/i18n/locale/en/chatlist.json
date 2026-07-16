@@ -51,6 +51,10 @@
       "LAST_ACTIVITY": {
         "NOT_ACTIVE": "Last activity:",
         "ACTIVE": "Last activity"
+      },
+      "LAST_SEEN": {
+        "CONTACT": "Contact last seen:",
+        "AGENT": "Agent last seen:"
       }
     },
     "SORT_ORDER_ITEMS": {

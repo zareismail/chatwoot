@@ -28,11 +28,25 @@ export default {
       type: [String, Number],
       default: '',
     },
+    contactLastSeenAt: {
+      type: [String, Date, Number],
+      default: 0,
+    },
+    agentLastSeenAt: {
+      type: [String, Date, Number],
+      default: 0,
+    },
   },
   data() {
     return {
       lastActivityAtTimeAgo: dynamicTime(this.lastActivityTimestamp),
       createdAtTimeAgo: dynamicTime(this.createdAtTimestamp),
+      contactLastSeenTimeAgo: this.contactLastSeenAt
+        ? dynamicTime(this.contactLastSeenAt)
+        : '',
+      agentLastSeenTimeAgo: this.agentLastSeenAt
+        ? dynamicTime(this.agentLastSeenAt)
+        : '',
       timer: null,
     };
   },
@@ -42,6 +56,14 @@ export default {
     },
     createdAtTime() {
       return shortTimestamp(this.createdAtTimeAgo);
+    },
+    contactLastSeenDisplay() {
+      if (!this.contactLastSeenAt) return '';
+      return shortTimestamp(this.contactLastSeenTimeAgo);
+    },
+    agentLastSeenDisplay() {
+      if (!this.agentLastSeenAt) return '';
+      return shortTimestamp(this.agentLastSeenTimeAgo);
     },
     createdAt() {
       const createdTimeDiff = Date.now() - this.createdAtTimestamp * 1000;
@@ -67,8 +89,24 @@ export default {
           )} ${dateFormat(this.lastActivityTimestamp)}`;
     },
     tooltipText() {
-      return `${this.createdAt}
-              ${this.lastActivity}`;
+      let lines = [this.createdAt, this.lastActivity];
+      if (this.contactLastSeenAt) {
+        const contactDiff = Date.now() - this.contactLastSeenAt * 1000;
+        const contactLabel =
+          contactDiff > DAY_IN_MILLI_SECONDS * 30
+            ? `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_SEEN.CONTACT')} ${dateFormat(this.contactLastSeenAt)}`
+            : `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_SEEN.CONTACT')} ${this.contactLastSeenTimeAgo}`;
+        lines.push(contactLabel);
+      }
+      if (this.agentLastSeenAt) {
+        const agentDiff = Date.now() - this.agentLastSeenAt * 1000;
+        const agentLabel =
+          agentDiff > DAY_IN_MILLI_SECONDS * 30
+            ? `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_SEEN.AGENT')} ${dateFormat(this.agentLastSeenAt)}`
+            : `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_SEEN.AGENT')} ${this.agentLastSeenTimeAgo}`;
+        lines.push(agentLabel);
+      }
+      return lines.join('<br>');
     },
   },
   watch: {
@@ -82,6 +120,12 @@ export default {
       // Reset display values and timer when the row is recycled to a different conversation.
       this.lastActivityAtTimeAgo = dynamicTime(this.lastActivityTimestamp);
       this.createdAtTimeAgo = dynamicTime(this.createdAtTimestamp);
+      this.contactLastSeenTimeAgo = this.contactLastSeenAt
+        ? dynamicTime(this.contactLastSeenAt)
+        : '';
+      this.agentLastSeenTimeAgo = this.agentLastSeenAt
+        ? dynamicTime(this.agentLastSeenAt)
+        : '';
       if (this.isAutoRefreshEnabled) {
         clearTimeout(this.timer);
         this.createTimer();
@@ -124,9 +168,19 @@ export default {
     v-tooltip.top="{
       content: tooltipText,
       delay: { show: 1000, hide: 0 },
+      html: true,
     }"
     class="ml-auto leading-4 text-xxs text-n-slate-10 hover:text-n-slate-11"
   >
     <span>{{ `${createdAtTime} • ${lastActivityTime}` }}</span>
+    <span
+      v-if="contactLastSeenDisplay"
+      class="block text-n-slate-9"
+    >
+      {{ contactLastSeenDisplay }}
+      <span v-if="agentLastSeenDisplay" class="text-n-slate-8">
+        · {{ agentLastSeenDisplay }}
+      </span>
+    </span>
   </div>
 </template>

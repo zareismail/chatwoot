@@ -51,6 +51,10 @@
       "LAST_ACTIVITY": {
         "NOT_ACTIVE": "آخرین فعالیت:",
         "ACTIVE": "آخرین فعالیت"
+      },
+      "LAST_SEEN": {
+        "CONTACT": "آخرین بازدید مخاطب:",
+        "AGENT": "آخرین بازدید اپراتور:"
       }
     },
     "SORT_ORDER_ITEMS": {
