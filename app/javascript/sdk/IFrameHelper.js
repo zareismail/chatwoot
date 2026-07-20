@@ -24,6 +24,7 @@ import { isWidgetColorLighter } from 'shared/helpers/colorHelper';
 import { dispatchWindowEvent } from 'shared/helpers/CustomEventHelper';
 import {
   CHATWOOT_ERROR,
+  CHATWOOT_ON_NOTIFICATION_DOT_CHANGED,
   CHATWOOT_POSTBACK,
   CHATWOOT_READY,
 } from '../widget/constants/sdkEvents';
@@ -269,6 +270,11 @@ export const IFrameHelper = {
 
     resetUnreadMode: () => removeUnreadClass(),
     handleNotificationDot: event => {
+      dispatchWindowEvent({
+        eventName: CHATWOOT_ON_NOTIFICATION_DOT_CHANGED,
+        data: event,
+      });
+
       if (window.$chatwoot.hideMessageBubble) {
         return;
       }
