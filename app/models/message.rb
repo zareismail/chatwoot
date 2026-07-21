@@ -330,10 +330,24 @@ class Message < ApplicationRecord
     send_reply
     execute_message_template_hooks
     update_contact_activity
+    send_contact_push_notification
   end
 
   def update_contact_activity
     sender.update(last_activity_at: DateTime.now) if sender.is_a?(Contact)
+  end
+
+  def send_contact_push_notification
+    return unless outgoing? && !private?
+    return unless sender.is_a?(User)
+    return unless conversation.inbox.web_widget?
+
+    contact = conversation.contact
+    return if contact.blank?
+    return if contact.identifier.blank?
+    return if contact.online_presence?
+
+    Contacts::ContactPushNotificationJob.perform_later(contact.id, id)
   end
 
   def update_waiting_since
