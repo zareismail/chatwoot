@@ -78,8 +78,11 @@ class BulkMessages::SendJob < ApplicationJob
   # Always reuse the contact's existing conversation on this inbox, regardless of the
   # inbox's lock_to_single_conversation setting - a bulk message must never create a
   # second conversation for a contact who already has one.
+  #
+  # The DB enforces a unique index on contact_id, so we must look up by contact_id
+  # (not just contact_inbox) to avoid a RecordNotUnique race.
   def find_or_create_conversation(contact_inbox)
-    contact_inbox.conversations.last ||
+    contact_inbox.inbox.conversations.find_by(contact_id: contact_inbox.contact_id) ||
       ConversationBuilder.new(params: ActionController::Parameters.new({}), contact_inbox: contact_inbox).perform
   end
 end
