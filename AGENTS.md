@@ -1,5 +1,9 @@
 # Chatwoot Development Guidelines
 
+This is the shared guidance file for coding agents working in this repository (`CLAUDE.md` and `.windsurf/rules/chatwoot.md` mirror it — keep them in sync when editing).
+
+This repo is the **ragham** fork of Chatwoot. Working branch is `ragham`; `develop` is the upstream-tracking base branch.
+
 ## Build / Test / Lint
 
 - **Setup**: `bundle install && pnpm install`
@@ -12,12 +16,85 @@
 - **Lint JS/Vue**: `pnpm eslint` / `pnpm eslint:fix`
 - **Lint Ruby**: `bundle exec rubocop -a`
 - **Test JS**: `pnpm test` or `pnpm test:watch`
+- **Single JS Test**: `pnpm test app/javascript/dashboard/path/to/file.spec.js` (vitest specs are colocated next to the source, or under a `specs/` folder)
 - **Test Ruby**: `bundle exec rspec spec/path/to/file_spec.rb`
 - **Single Test**: `bundle exec rspec spec/path/to/file_spec.rb:LINE_NUMBER`
-- **Run Project**: `overmind start -f Procfile.dev`
+- **E2E**: Playwright lives in `tests/playwright/` with its own `package.json`/lockfile — install and run from inside that directory (see `tests/playwright/README.md`)
+- **Run Project**: `overmind start -f Procfile.dev` (or `make run` / `make force_run` to clear stale sockets & ports first)
+- **Attach to a process**: `make debug` (backend) / `make debug_worker` (sidekiq)
+- **Rails console**: `bundle exec rails console`
+- **Component stories**: `pnpm story:dev` (Histoire)
+- **Build the embed SDK**: `pnpm build:sdk` (separate Vite lib build, `vite.lib.config.ts`)
 - **Ruby Version**: Manage Ruby via `rbenv` and install the version listed in `.ruby-version` (e.g., `rbenv install $(cat .ruby-version)`)
 - **rbenv setup**: Before running any `bundle` or `rspec` commands, init rbenv in your shell (`eval "$(rbenv init -)"`) so the correct Ruby/Bundler versions are used
 - Always prefer `bundle exec` for Ruby CLI tasks (rspec, rake, rubocop, etc.)
+
+## Architecture
+
+Rails 7.1 monolith (Ruby 3.4.4) serving a JSON API + several independent Vue 3 SPAs bundled by Vite (`vite-plugin-ruby`). Postgres + Redis; background work on Sidekiq.
+
+### Backend layering
+
+Business logic is deliberately spread across object roles rather than fat models/controllers. Before adding code to a model or controller, check which role it belongs in:
+
+- `app/builders/` — construct aggregates (`ConversationBuilder`, `Messages::*`, `ContactInboxBuilder`). Anything creating a conversation/message from an inbound event goes here.
+- `app/finders/` — list queries and filtering (`ConversationFinder`, `MessageFinder`, `NotificationFinder`).
+- `app/services/` — provider/integration logic, one directory per channel or vendor (`whatsapp/`, `twilio/`, `facebook/`, `email/`, …) plus cross-cutting services (`FilterService`, `SearchService`, `ActionService`).
+- `app/jobs/` — Sidekiq jobs. Queues are strictly priority-ordered in `config/sidekiq.yml` (`critical` → `housekeeping`); pick a queue deliberately.
+- `app/policies/` — Pundit authorization.
+- `app/listeners/` — event handlers (see below).
+
+### Event pipeline
+
+This is the backbone of realtime and integrations. Code emits `Dispatcher.dispatch(event_name, timestamp, data)`; `Dispatcher` fans out to both `SyncDispatcher` (in-process) and `AsyncDispatcher` (via `EventDispatcherJob`). Listeners in `app/listeners/` are singletons with one method per event name:
+
+- `ActionCableListener` → pushes to the dashboard/widget over websockets
+- `WebhookListener` / `HookListener` / `InstallationWebhookListener` → outbound integrations
+- `NotificationListener`, `AutomationRuleListener`, `CampaignListener`, `CsatSurveyListener`, `ReportingEventListener`
+
+When adding a new domain event: dispatch it, then add a method of the same name to every listener that should react. Do not reach across into another listener's concern.
+
+### Multi-tenancy, inboxes and channels
+
+`Account` is the tenant root; almost every model belongs to an account and API routes are nested under `/api/v1/accounts/:account_id/`. `Inbox` is the account-facing entity and `belongs_to :channel, polymorphic: true`; each concrete channel lives in `app/models/channel/` (`web_widget`, `whatsapp`, `email`, `facebook_page`, `instagram`, `telegram`, `line`, `sms`, `twilio_sms`, `twitter_profile`, `tiktok`, `api`) and mixes in `Channelable`. Adding a channel touches: channel model + migration, a service namespace under `app/services/<provider>/` for send/receive, an inbound webhook controller, and a frontend inbox-settings view.
+
+Feature gating is per-account: flags are declared in `config/features.yml` (order is significant — never reorder) and checked with `account.feature_enabled?('name')`.
+
+### API surfaces
+
+- `/api/v1/accounts/:account_id/...` and `/api/v2/accounts/...` — agent dashboard API (user auth)
+- `/api/v1/widget/...` — live-chat widget, authenticated by contact pubsub token
+- `/public/api/v1/...` — help center / portal
+- `/platform/api/v1/...` — platform apps provisioning API
+- `/webhooks/...`, plus per-provider controllers (`app/controllers/twilio`, `instagram`, `google`, `shopify`, …)
+- API docs source lives in `swagger/` (assembled into `swagger/swagger.json`)
+
+### Enterprise overlay mechanism
+
+`config/initializers/01_inject_enterprise_edition_module.rb` patches `Module` with `prepend_mod_with` / `include_mod_with` / `extend_mod_with`. An OSS class ends with e.g. `prepend_mod_with('ConversationPolicy')`, and if `enterprise/` is loaded (`ChatwootApp.extensions`), `Enterprise::ConversationPolicy` from `enterprise/app/...` is prepended. Enterprise-only features (Captain AI, SLA, custom roles, voice/Twilio calling, SAML, audit logs) live entirely under `enterprise/`. See the Enterprise Edition Notes section below for the working rules.
+
+### Frontend
+
+Eight Vite entrypoints in `app/javascript/entrypoints/`, each a distinct app mounted from an ERB layout:
+
+| Entrypoint | App | Source |
+| --- | --- | --- |
+| `dashboard.js` | agent dashboard | `app/javascript/dashboard` |
+| `v3app.js` | auth/login/onboarding shell (chosen by `DashboardController#set_application_pack`) | `app/javascript/v3` |
+| `widget.js` | live-chat widget (runs inside an iframe) | `app/javascript/widget` |
+| `sdk.js` | embed script that injects the widget iframe on customer sites | `app/javascript/sdk` |
+| `portal.js` | public help center | `app/javascript/portal` |
+| `survey.js` | CSAT survey page | `app/javascript/survey` |
+| `superadmin.js`, `superadmin_pages.js` | Administrate-based super admin | `app/javascript/superadmin_pages` |
+
+Dashboard state is mid-migration: legacy Vuex modules in `dashboard/store/modules/` coexist with Pinia stores in `dashboard/stores/`. **New state goes in Pinia.** Likewise `dashboard/components/` is legacy and `dashboard/components-next/` is the target for new UI.
+
+Path aliases (defined once in `vite.shared.ts`, shared by `vite.config.ts` and `vitest.config.ts`): `dashboard`, `next` (→ components-next), `components`, `shared`, `widget`, `survey`, `v3`, `helpers`, `assets`.
+
+## Deployment (ragham)
+
+- `bash deploy/docker.sh` builds `docker/Dockerfile` and pushes to `registry.hamdocker.ir/raghamapp/chatwoot` with a date tag (`YYYY-MM-DD_HH-MM`). It refuses to run with a dirty working tree.
+- The `app` and `sidekiq` pods share the same image — bump the tag in both, restart, then run migrations if the release includes any.
 
 ## Code Style
 
