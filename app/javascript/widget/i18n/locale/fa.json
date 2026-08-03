@@ -48,6 +48,7 @@
   "YOU": "شما",
   "START_NEW_CONVERSATION": "یک مکالمه جدید را شروع کنید",
   "VIEW_UNREAD_MESSAGES": "شما پیام خوانده نشده دارید",
+  "NEW_MESSAGES": "{n} پیام جدید | {n} پیام جدید",
   "UNREAD_VIEW": {
     "VIEW_MESSAGES_BUTTON": "مشاهده پیام‌های جدید",
     "CLOSE_MESSAGES_BUTTON": "بستن",
@@ -146,6 +147,15 @@
     "fallback": {
       "CONTENT": "یک آدرس URL به اشتراک گذاشته شده"
     }
+  },
+  "IMAGE_GALLERY": {
+    "FULLSCREEN": "نمایش تمام‌صفحه",
+    "CLOSE": "بستن",
+    "DOWNLOAD": "دانلود",
+    "ROTATE_CLOCKWISE": "چرخش ساعت‌گرد",
+    "ROTATE_COUNTER_CLOCKWISE": "چرخش پادساعت‌گرد",
+    "PREVIOUS": "تصویر قبلی",
+    "NEXT": "تصویر بعدی"
   },
   "FOOTER_REPLY_TO": {
     "REPLY_TO": "در حال پاسخ دهی به:"

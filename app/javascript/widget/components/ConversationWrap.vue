@@ -7,6 +7,8 @@ import { useDarkMode } from 'widget/composables/useDarkMode';
 import { MESSAGE_TYPE } from 'shared/constants/messages';
 import { mapActions, mapGetters } from 'vuex';
 
+const SCROLL_TO_BOTTOM_THRESHOLD = 50;
+
 export default {
   name: 'ConversationWrap',
   components: {
@@ -29,6 +31,8 @@ export default {
     return {
       previousScrollHeight: 0,
       previousConversationSize: 0,
+      isScrolledToBottom: true,
+      unreadCount: 0,
     };
   },
   computed: {
@@ -43,6 +47,9 @@ export default {
     }),
     colorSchemeClass() {
       return `${this.darkMode === 'dark' ? 'dark-scheme' : 'light-scheme'}`;
+    },
+    isLastMessageFromUser() {
+      return this.lastMessage.message_type === MESSAGE_TYPE.INCOMING;
     },
     showStatusIndicator() {
       const { status } = this.conversationAttributes;
@@ -61,26 +68,62 @@ export default {
     },
   },
   mounted() {
-    this.$el.addEventListener('scroll', this.handleScroll);
+    this.$refs.scrollContainer.addEventListener('scroll', this.handleScroll);
     this.scrollToBottom();
   },
-  updated() {
-    if (this.previousConversationSize !== this.conversationSize) {
-      this.previousConversationSize = this.conversationSize;
-      this.scrollToBottom();
-    }
+  beforeUpdate() {
+    this.isScrolledToBottom = this.isAtBottom();
   },
-  unmounted() {
-    this.$el.removeEventListener('scroll', this.handleScroll);
+  updated() {
+    if (this.previousConversationSize === this.conversationSize) return;
+
+    const newMessageCount =
+      this.conversationSize - this.previousConversationSize;
+    this.previousConversationSize = this.conversationSize;
+
+    // previousScrollHeight is only set while older messages are being
+    // prepended, where scrollToBottom restores the reading position instead.
+    if (this.previousScrollHeight) {
+      this.scrollToBottom();
+      return;
+    }
+
+    if (this.isScrolledToBottom || this.isLastMessageFromUser) {
+      this.scrollToBottom();
+      this.unreadCount = 0;
+      return;
+    }
+
+    this.unreadCount += newMessageCount;
+  },
+  beforeUnmount() {
+    this.$refs.scrollContainer.removeEventListener('scroll', this.handleScroll);
   },
   methods: {
     ...mapActions('conversation', ['fetchOldConversations']),
+    isAtBottom() {
+      const { scrollTop, scrollHeight, clientHeight } =
+        this.$refs.scrollContainer;
+      return (
+        scrollHeight - scrollTop - clientHeight < SCROLL_TO_BOTTOM_THRESHOLD
+      );
+    },
     scrollToBottom() {
-      const container = this.$el;
+      const container = this.$refs.scrollContainer;
       container.scrollTop = container.scrollHeight - this.previousScrollHeight;
       this.previousScrollHeight = 0;
     },
+    jumpToLatest() {
+      const container = this.$refs.scrollContainer;
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      this.unreadCount = 0;
+    },
     handleScroll() {
+      const container = this.$refs.scrollContainer;
+      if (this.isAtBottom()) {
+        this.unreadCount = 0;
+      }
+
       if (
         this.isFetchingList ||
         this.allMessagesLoaded ||
@@ -89,9 +132,9 @@ export default {
         return;
       }
 
-      if (this.$el.scrollTop < 100) {
+      if (container.scrollTop < 100) {
         this.fetchOldConversations({ before: this.earliestMessage.id });
-        this.previousScrollHeight = this.$el.scrollHeight;
+        this.previousScrollHeight = container.scrollHeight;
       }
     },
   },
@@ -99,25 +142,39 @@ export default {
 </script>
 
 <template>
-  <div class="conversation--container" :class="colorSchemeClass">
-    <div class="conversation-wrap" :class="{ 'is-typing': isAgentTyping }">
-      <div v-if="isFetchingList" class="message--loader">
-        <Spinner />
+  <div class="relative flex flex-1 overflow-hidden">
+    <div
+      ref="scrollContainer"
+      class="conversation--container"
+      :class="colorSchemeClass"
+    >
+      <div class="conversation-wrap" :class="{ 'is-typing': isAgentTyping }">
+        <div v-if="isFetchingList" class="message--loader">
+          <Spinner />
+        </div>
+        <div
+          v-for="groupedMessage in groupedMessages"
+          :key="groupedMessage.date"
+          class="messages-wrap"
+        >
+          <DateSeparator :date="groupedMessage.date" />
+          <ChatMessage
+            v-for="message in groupedMessage.messages"
+            :key="message.id"
+            :message="message"
+          />
+        </div>
+        <AgentTypingBubble v-if="showStatusIndicator" />
       </div>
-      <div
-        v-for="groupedMessage in groupedMessages"
-        :key="groupedMessage.date"
-        class="messages-wrap"
-      >
-        <DateSeparator :date="groupedMessage.date" />
-        <ChatMessage
-          v-for="message in groupedMessage.messages"
-          :key="message.id"
-          :message="message"
-        />
-      </div>
-      <AgentTypingBubble v-if="showStatusIndicator" />
     </div>
+    <button
+      v-if="unreadCount"
+      class="absolute z-20 flex items-center gap-1 px-3 py-1.5 -translate-x-1/2 text-xs font-medium rounded-full shadow-md bottom-3 left-1/2 bg-n-background dark:bg-n-solid-3 text-n-slate-12"
+      @click="jumpToLatest"
+    >
+      <i class="i-lucide-arrow-down size-3" />
+      {{ $t('NEW_MESSAGES', unreadCount) }}
+    </button>
   </div>
 </template>
 
