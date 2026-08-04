@@ -11,6 +11,7 @@
     "MENTION_HEADING": "Mentions",
     "UNATTENDED_HEADING": "Unattended",
     "UNREAD_HEADING": "Unread",
+    "UNANSWERED_HEADING": "Unanswered",
     "SEARCH": {
       "INPUT": "Search for People, Chats, Saved Replies .."
     },

@@ -86,6 +86,7 @@ export const isAConversationRoute = (
     'conversation_mentions',
     'conversation_unattended',
     'conversation_unread',
+    'conversation_unanswered',
     'inbox_dashboard',
     'label_conversations',
     'team_conversations',
@@ -97,6 +98,7 @@ export const isAConversationRoute = (
     'conversation_through_mentions',
     'conversation_through_unattended',
     'conversation_through_unread',
+    'conversation_through_unanswered',
     'conversation_through_inbox',
     'conversations_through_label',
     'conversations_through_team',
@@ -122,6 +124,8 @@ export const getConversationDashboardRoute = routeName => {
       return 'conversation_unattended';
     case 'conversation_through_unread':
       return 'conversation_unread';
+    case 'conversation_through_unanswered':
+      return 'conversation_unanswered';
     case 'conversations_through_label':
       return 'label_conversations';
     case 'conversations_through_team':

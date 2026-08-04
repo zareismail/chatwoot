@@ -5,6 +5,7 @@ import {
   filterByTeam,
   filterByLabel,
   filterByUnattended,
+  filterByUnanswered,
 } from '../../conversations/helpers';
 
 const conversationList = [
@@ -170,5 +171,51 @@ describe('#filterByUnattended', () => {
   });
   it('returns true if conversation type is unattended and has first reply', () => {
     expect(filterByUnattended(true, 'mentions', 123)).toEqual(true);
+  });
+});
+
+describe('#filterByUnanswered', () => {
+  it('passes through when the conversation type is not unanswered', () => {
+    const conversation = { last_non_activity_message: { message_type: 1 } };
+    expect(filterByUnanswered(true, 'unattended', conversation)).toEqual(true);
+    expect(filterByUnanswered(false, 'unattended', conversation)).toEqual(false);
+  });
+
+  it('returns true when the customer sent the last message', () => {
+    const conversation = { last_non_activity_message: { message_type: 0 } };
+    expect(filterByUnanswered(true, 'unanswered', conversation)).toEqual(true);
+  });
+
+  it('returns false when an agent sent the last message', () => {
+    const conversation = { last_non_activity_message: { message_type: 1 } };
+    expect(filterByUnanswered(true, 'unanswered', conversation)).toEqual(false);
+  });
+
+  it('returns false when the conversation is still unread', () => {
+    const conversation = {
+      last_non_activity_message: { message_type: 0 },
+      unread_count: 2,
+    };
+    expect(filterByUnanswered(true, 'unanswered', conversation)).toEqual(false);
+  });
+
+  it('falls back to the last pushed message when there is no list payload', () => {
+    expect(
+      filterByUnanswered(true, 'unanswered', {
+        messages: [{ message_type: 0 }],
+      })
+    ).toEqual(true);
+    expect(
+      filterByUnanswered(true, 'unanswered', {
+        messages: [{ message_type: 1 }],
+      })
+    ).toEqual(false);
+  });
+
+  it('keeps the conversation when a private note hides the last message', () => {
+    const conversation = {
+      last_non_activity_message: { message_type: 1, private: true },
+    };
+    expect(filterByUnanswered(true, 'unanswered', conversation)).toEqual(true);
   });
 });

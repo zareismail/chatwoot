@@ -346,6 +346,13 @@ const menuItems = computed(() => {
           to: accountScopedRoute('conversation_unread'),
         },
         {
+          name: 'Unanswered',
+          activeOn: ['conversation_through_unanswered'],
+          label: t('SIDEBAR.UNANSWERED_CONVERSATIONS'),
+          icon: 'i-lucide-message-square-warning',
+          to: accountScopedRoute('conversation_unanswered'),
+        },
+        {
           name: 'Mentions',
           label: t('SIDEBAR.MENTIONED_CONVERSATIONS'),
           icon: 'i-lucide-at-sign',

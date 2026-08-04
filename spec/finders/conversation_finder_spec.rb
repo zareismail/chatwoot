@@ -290,5 +290,64 @@ describe ConversationFinder do
         expect(result[:conversations].length).to be 2
       end
     end
+
+    context 'with unanswered' do
+      let(:params) { { status: 'open', assignee_type: 'me', conversation_type: 'unanswered' } }
+
+      # the agent read the customer message and never replied
+      let!(:forgotten_conversation) do
+        conversation = create(:conversation, account: account, inbox: inbox, assignee: user_1, agent_last_seen_at: 10.minutes.ago)
+        create(:message, account: account, inbox: inbox, conversation: conversation, message_type: :incoming,
+                         created_at: 1.hour.ago)
+        conversation
+      end
+
+      # answered once, then the customer wrote again and nobody replied
+      let!(:re_opened_conversation) do
+        conversation = create(:conversation, account: account, inbox: inbox, assignee: user_1, agent_last_seen_at: 10.minutes.ago)
+        create(:message, account: account, inbox: inbox, conversation: conversation, message_type: :outgoing,
+                         sender: user_1, created_at: 3.hours.ago)
+        create(:message, account: account, inbox: inbox, conversation: conversation, message_type: :incoming,
+                         created_at: 1.hour.ago)
+        conversation
+      end
+
+      # the customer wrote last a long time ago, nobody ever replied
+      let!(:stale_conversation) do
+        conversation = create(:conversation, account: account, inbox: inbox, assignee: user_1, agent_last_seen_at: 3.months.ago)
+        create(:message, account: account, inbox: inbox, conversation: conversation, message_type: :incoming,
+                         created_at: 6.months.ago)
+        conversation
+      end
+
+      before do
+        # an agent replied last
+        answered_conversation = create(:conversation, account: account, inbox: inbox, assignee: user_1, agent_last_seen_at: 10.minutes.ago)
+        create(:message, account: account, inbox: inbox, conversation: answered_conversation, message_type: :incoming,
+                         created_at: 3.hours.ago)
+        create(:message, account: account, inbox: inbox, conversation: answered_conversation, message_type: :outgoing,
+                         sender: user_1, created_at: 1.hour.ago)
+
+        # the customer wrote last but no agent has read it yet, it belongs to the unread list
+        unread_conversation = create(:conversation, account: account, inbox: inbox, assignee: user_1, agent_last_seen_at: 3.hours.ago)
+        create(:message, account: account, inbox: inbox, conversation: unread_conversation, message_type: :incoming,
+                         created_at: 1.hour.ago)
+      end
+
+      it 'returns read conversations where the customer sent the last message, however old' do
+        result = conversation_finder.perform
+        expect(result[:conversations].map(&:id)).to contain_exactly(
+          forgotten_conversation.id, re_opened_conversation.id, stale_conversation.id
+        )
+      end
+
+      it 'ignores private notes left after the customer message' do
+        create(:message, account: account, inbox: inbox, conversation: forgotten_conversation, message_type: :outgoing,
+                         sender: user_1, private: true, created_at: 30.minutes.ago)
+
+        result = conversation_finder.perform
+        expect(result[:conversations].map(&:id)).to include(forgotten_conversation.id)
+      end
+    end
   end
 end

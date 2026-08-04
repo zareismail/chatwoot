@@ -147,6 +147,8 @@ class ConversationFinder
       @conversations = @conversations.unattended
     when 'unread'
       @conversations = @conversations.unread
+    when 'unanswered'
+      @conversations = @conversations.unanswered
     end
     @conversations
   end

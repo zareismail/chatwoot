@@ -234,6 +234,29 @@ export default {
       }),
     },
     {
+      path: frontendURL('accounts/:accountId/unanswered/conversations'),
+      name: 'conversation_unanswered',
+      meta: {
+        permissions: CONVERSATION_PERMISSIONS,
+      },
+      component: ConversationView,
+      props: () => ({ conversationType: 'unanswered' }),
+    },
+    {
+      path: frontendURL(
+        'accounts/:accountId/unanswered/conversations/:conversationId'
+      ),
+      name: 'conversation_through_unanswered',
+      meta: {
+        permissions: CONVERSATION_PERMISSIONS,
+      },
+      component: ConversationView,
+      props: route => ({
+        conversationId: route.params.conversationId,
+        conversationType: 'unanswered',
+      }),
+    },
+    {
       path: frontendURL('accounts/:accountId/participating/conversations'),
       name: 'conversation_participating',
       meta: {

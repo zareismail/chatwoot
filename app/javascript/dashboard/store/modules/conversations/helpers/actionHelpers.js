@@ -35,6 +35,14 @@ export const isOnUnreadView = ({ route: { name: routeName } }) => {
   return UNREAD_ROUTES.includes(routeName);
 };
 
+export const isOnUnansweredView = ({ route: { name: routeName } }) => {
+  const UNANSWERED_ROUTES = [
+    'conversation_unanswered',
+    'conversation_through_unanswered',
+  ];
+  return UNANSWERED_ROUTES.includes(routeName);
+};
+
 export const isOnParticipatingView = ({ route: { name: routeName } }) => {
   const PARTICIPATING_ROUTES = [
     'conversation_participating',

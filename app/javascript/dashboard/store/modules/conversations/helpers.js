@@ -1,4 +1,7 @@
-import { CONVERSATION_PRIORITY_ORDER } from 'shared/constants/messages';
+import {
+  CONVERSATION_PRIORITY_ORDER,
+  MESSAGE_TYPE,
+} from 'shared/constants/messages';
 
 export const findPendingMessageIndex = (chat, message) => {
   const { echo_id: tempMessageId } = message;
@@ -35,6 +38,29 @@ export const filterByUnattended = (
     : shouldFilter;
 };
 
+// Mirrors the Conversation.unanswered scope: the customer sent the last message,
+// an agent has read it and nobody replied. The list payload carries
+// `last_non_activity_message` while the websocket payload carries the last chat
+// message under `messages`; either one tells us who spoke last. A private note is
+// not an answer but it hides the message underneath it, so we keep the
+// conversation instead of dropping a row the server already returned.
+export const filterByUnanswered = (
+  shouldFilter,
+  conversationType,
+  conversation
+) => {
+  if (conversationType !== 'unanswered') return shouldFilter;
+  const {
+    last_non_activity_message: lastNonActivity,
+    unread_count: unreadCount,
+    messages = [],
+  } = conversation;
+  if (unreadCount > 0) return false;
+  const lastMessage = lastNonActivity || messages[messages.length - 1];
+  if (!lastMessage || lastMessage.private) return shouldFilter;
+  return lastMessage.message_type === MESSAGE_TYPE.INCOMING && shouldFilter;
+};
+
 export const applyPageFilters = (conversation, filters) => {
   const { inboxId, status, labels = [], teamId, conversationType } = filters;
   const {
@@ -57,6 +83,11 @@ export const applyPageFilters = (conversation, filters) => {
     conversationType,
     firstReplyOn,
     waitingSince
+  );
+  shouldFilter = filterByUnanswered(
+    shouldFilter,
+    conversationType,
+    conversation
   );
 
   return shouldFilter;

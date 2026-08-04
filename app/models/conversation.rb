@@ -83,6 +83,16 @@ class Conversation < ApplicationRecord
   }
   scope :unattended, -> { where(first_reply_created_at: nil).or(where.not(waiting_since: nil)) }
   scope :unread, -> { where(unread_messages_count_arel.gt(0)) }
+  # The customer sent the last message, an agent has read it and nobody replied.
+  # Private notes and activity messages are ignored, since an internal note is not
+  # an answer. Unread conversations belong to the unread list, not this one.
+  scope :unanswered, lambda {
+    joins(
+      "INNER JOIN (#{last_chat_messages.to_sql}) AS last_chat_messages
+      ON last_chat_messages.conversation_id = conversations.id"
+    ).where(last_chat_messages: { message_type: Message.message_types[:incoming] })
+     .where(unread_messages_count_arel.eq(0))
+  }
   scope :resolvable_not_waiting, lambda { |auto_resolve_after|
     return none if auto_resolve_after.to_i.zero?
 
@@ -208,6 +218,14 @@ class Conversation < ApplicationRecord
 
   def tweet?
     inbox.inbox_type == 'Twitter' && additional_attributes['type'] == 'tweet'
+  end
+
+  # Latest real message of every conversation, ignoring private notes and
+  # activity messages.
+  def self.last_chat_messages
+    Message.except(:order).chat
+           .select('DISTINCT ON (conversation_id) conversation_id, created_at, message_type')
+           .order('conversation_id, created_at DESC')
   end
 
   def self.unread_messages_count_arel

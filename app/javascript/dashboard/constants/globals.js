@@ -17,6 +17,7 @@ export default {
     PARTICIPATING: 'participating',
     UNATTENDED: 'unattended',
     UNREAD: 'unread',
+    UNANSWERED: 'unanswered',
   },
   SORT_BY_TYPE: {
     LAST_ACTIVITY_AT_ASC: 'last_activity_at_asc',
