@@ -32,11 +32,12 @@ export default {
       previousScrollHeight: 0,
       previousConversationSize: 0,
       isScrolledToBottom: true,
-      unreadCount: 0,
+      lastSeenMessageId: null,
     };
   },
   computed: {
     ...mapGetters({
+      conversation: 'conversation/getConversation',
       earliestMessage: 'conversation/getEarliestMessage',
       lastMessage: 'conversation/getLastMessage',
       allMessagesLoaded: 'conversation/getAllMessagesLoaded',
@@ -50,6 +51,22 @@ export default {
     },
     isLastMessageFromUser() {
       return this.lastMessage.message_type === MESSAGE_TYPE.INCOMING;
+    },
+    // Only agent messages that arrived after the last one the user saw count as
+    // unread. The user's own messages, activity events and the history that
+    // gets prepended while scrolling up are all part of the list too, so a
+    // plain message count would report unread messages when there are none.
+    unreadCount() {
+      const messages = Object.values(this.conversation);
+      const lastSeenIndex = messages.findIndex(
+        message => message.id === this.lastSeenMessageId
+      );
+      if (lastSeenIndex === -1) return 0;
+
+      return messages
+        .slice(lastSeenIndex + 1)
+        .filter(message => message.message_type === MESSAGE_TYPE.OUTGOING)
+        .length;
     },
     showStatusIndicator() {
       const { status } = this.conversationAttributes;
@@ -69,7 +86,9 @@ export default {
   },
   mounted() {
     this.$refs.scrollContainer.addEventListener('scroll', this.handleScroll);
+    this.previousConversationSize = this.conversationSize;
     this.scrollToBottom();
+    this.markAsSeen();
   },
   beforeUpdate() {
     this.isScrolledToBottom = this.isAtBottom();
@@ -77,8 +96,6 @@ export default {
   updated() {
     if (this.previousConversationSize === this.conversationSize) return;
 
-    const newMessageCount =
-      this.conversationSize - this.previousConversationSize;
     this.previousConversationSize = this.conversationSize;
 
     // previousScrollHeight is only set while older messages are being
@@ -90,11 +107,8 @@ export default {
 
     if (this.isScrolledToBottom || this.isLastMessageFromUser) {
       this.scrollToBottom();
-      this.unreadCount = 0;
-      return;
+      this.markAsSeen();
     }
-
-    this.unreadCount += newMessageCount;
   },
   beforeUnmount() {
     this.$refs.scrollContainer.removeEventListener('scroll', this.handleScroll);
@@ -108,20 +122,25 @@ export default {
         scrollHeight - scrollTop - clientHeight < SCROLL_TO_BOTTOM_THRESHOLD
       );
     },
+    markAsSeen() {
+      this.lastSeenMessageId = this.lastMessage.id ?? null;
+    },
     scrollToBottom() {
       const container = this.$refs.scrollContainer;
       container.scrollTop = container.scrollHeight - this.previousScrollHeight;
       this.previousScrollHeight = 0;
+      this.isScrolledToBottom = this.isAtBottom();
     },
     jumpToLatest() {
       const container = this.$refs.scrollContainer;
       container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-      this.unreadCount = 0;
+      this.markAsSeen();
     },
     handleScroll() {
       const container = this.$refs.scrollContainer;
-      if (this.isAtBottom()) {
-        this.unreadCount = 0;
+      this.isScrolledToBottom = this.isAtBottom();
+      if (this.isScrolledToBottom) {
+        this.markAsSeen();
       }
 
       if (
@@ -168,12 +187,12 @@ export default {
       </div>
     </div>
     <button
-      v-if="unreadCount"
+      v-if="!isScrolledToBottom"
       class="absolute z-20 flex items-center gap-1 px-3 py-1.5 -translate-x-1/2 text-xs font-medium rounded-full shadow-md bottom-3 left-1/2 bg-n-background dark:bg-n-solid-3 text-n-slate-12"
       @click="jumpToLatest"
     >
       <i class="i-lucide-arrow-down size-3" />
-      {{ $t('NEW_MESSAGES', unreadCount) }}
+      {{ unreadCount ? $t('NEW_MESSAGES', unreadCount) : $t('JUMP_TO_LATEST') }}
     </button>
   </div>
 </template>
