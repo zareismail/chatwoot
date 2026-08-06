@@ -49,6 +49,14 @@ export default {
     onCanPlay() {
       this.loadError = false;
     },
+    // The native media controls handle the tap inside their shadow root and
+    // nothing propagates out, so the chat input keeps the focus it would lose
+    // on a tap anywhere else in the message view, and Android WebView re-opens
+    // the soft keyboard for it. Media events are the only signal a control was
+    // used, so release the focus from there.
+    releaseFocus() {
+      document.activeElement?.blur();
+    },
   },
 };
 </script>
@@ -63,6 +71,9 @@ export default {
       class="h-10 max-w-full"
       :class="{ 'dark:invert': !isUserBubble }"
       :src="sourceUrl"
+      @play="releaseFocus"
+      @pause="releaseFocus"
+      @seeking="releaseFocus"
       @error="onAudioError"
       @canplay="onCanPlay"
     />
