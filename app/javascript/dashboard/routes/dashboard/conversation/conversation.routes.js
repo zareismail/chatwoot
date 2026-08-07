@@ -1,5 +1,6 @@
 /* eslint arrow-body-style: 0 */
 import { frontendURL } from '../../../helper/URLHelper';
+import ConversationApi from '../../../api/inbox/conversation';
 import store from '../../../store';
 import ConversationView from './ConversationView.vue';
 
@@ -42,6 +43,41 @@ const redirectFolderConversationIfUnavailable = async (to, _from, next) => {
   });
 };
 
+// The dashboard opens on all conversations. Open the unread list instead when
+// the agent has something waiting, but only on the first load so that picking
+// all conversations from the sidebar afterwards still lands there.
+let hasCheckedUnreadOnLoad = false;
+
+const hasUnreadConversations = async () => {
+  try {
+    // The meta endpoint counts the same conversations the unread list renders.
+    // conversationUnreadCounts is not used here, it needs a feature flag that is
+    // off by default.
+    const { data } = await ConversationApi.meta({ conversationType: 'unread' });
+    return data.meta.all_count > 0;
+  } catch (error) {
+    return false;
+  }
+};
+
+const redirectToUnreadOnFirstLoad = async (to, _from, next) => {
+  if (hasCheckedUnreadOnLoad) {
+    next();
+    return;
+  }
+  hasCheckedUnreadOnLoad = true;
+
+  if (await hasUnreadConversations()) {
+    next({
+      name: 'conversation_unread',
+      params: { accountId: to.params.accountId },
+    });
+    return;
+  }
+
+  next();
+};
+
 export default {
   routes: [
     {
@@ -51,6 +87,7 @@ export default {
         permissions: CONVERSATION_PERMISSIONS,
       },
       component: ConversationView,
+      beforeEnter: redirectToUnreadOnFirstLoad,
       props: () => {
         return { inboxId: 0 };
       },
