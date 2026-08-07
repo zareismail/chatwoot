@@ -7,10 +7,12 @@ class ConversationBuilder
 
   private
 
+  # A contact is limited to a single conversation by the unique index on
+  # conversations.contact_id, so reuse the one they already have instead of
+  # creating a second one the database would reject. This ignores the inbox
+  # lock_to_single_conversation setting, which only scopes to a contact_inbox.
   def look_up_exising_conversation
-    return unless @contact_inbox.inbox.lock_to_single_conversation?
-
-    @contact_inbox.conversations.last
+    @contact_inbox.contact.conversations.last
   end
 
   def create_new_conversation

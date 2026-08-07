@@ -30,12 +30,8 @@ module Tiktok::MessagingHelpers
     contact_inbox = channel.inbox.contact_inboxes.find_by(source_id: tt_conversation_id)
     return if contact_inbox.blank?
 
-    if channel.inbox.lock_to_single_conversation
-      contact_inbox.conversations.order(created_at: :desc).first
-    else
-      contact_inbox.conversations.where.not(status: :resolved).order(created_at: :desc).first ||
-        contact_inbox.conversations.order(created_at: :desc).first
-    end
+    # a contact is limited to a single conversation, so reuse theirs across inboxes
+    contact_inbox.contact.conversations.last
   end
 
   def create_conversation(channel, contact_inbox, tt_conversation_id)

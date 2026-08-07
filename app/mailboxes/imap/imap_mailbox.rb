@@ -87,7 +87,12 @@ class Imap::ImapMailbox
   end
 
   def find_or_create_conversation
-    @conversation = find_conversation_by_in_reply_to || find_conversation_by_reference_ids || ::Conversation.create!(
+    # email threading wins, then the contact's own conversation: they are limited to
+    # a single one, so a second would be rejected by the database
+    @conversation = find_conversation_by_in_reply_to || find_conversation_by_reference_ids || @contact.conversations.last
+    return if @conversation
+
+    @conversation = ::Conversation.create!(
       {
         account_id: @account.id,
         inbox_id: @inbox.id,

@@ -56,27 +56,9 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
     @contact ||= @inbox.contact_inboxes.find_by(source_id: message_source_id)&.contact
   end
 
+  # a contact is limited to a single conversation, so reuse theirs across inboxes
   def conversation
-    @conversation ||= set_conversation_based_on_inbox_config
-  end
-
-  def set_conversation_based_on_inbox_config
-    if @inbox.lock_to_single_conversation
-      find_conversation_scope.order(created_at: :desc).first || build_conversation
-    else
-      find_or_build_for_multiple_conversations
-    end
-  end
-
-  def find_conversation_scope
-    Conversation.where(conversation_params)
-  end
-
-  def find_or_build_for_multiple_conversations
-    last_conversation = find_conversation_scope.where.not(status: :resolved).order(created_at: :desc).first
-    return build_conversation if last_conversation.nil?
-
-    last_conversation
+    @conversation ||= contact.conversations.last || build_conversation
   end
 
   def message_content

@@ -8,8 +8,9 @@ class Campaigns::CampaignConversationBuilder
     ActiveRecord::Base.transaction do
       @contact_inbox.lock!
 
-      # We won't send campaigns if a conversation is already present
-      raise 'Conversation already present' if @contact_inbox.reload.conversations.present?
+      # We won't send campaigns if a conversation is already present. A contact is
+      # limited to a single conversation, so this looks across all their inboxes.
+      raise 'Conversation already present' if @contact_inbox.reload.contact.conversations.present?
 
       @conversation = ::Conversation.create!(conversation_params)
       Messages::MessageBuilder.new(@campaign.sender, @conversation, message_params).perform

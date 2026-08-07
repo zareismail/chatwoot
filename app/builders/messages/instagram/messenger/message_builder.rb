@@ -22,11 +22,6 @@ class Messages::Instagram::Messenger::MessageBuilder < Messages::Instagram::Base
     {}
   end
 
-  def find_conversation_scope
-    Conversation.where(conversation_params)
-                .where("additional_attributes ->> 'type' = 'instagram_direct_message'")
-  end
-
   def additional_conversation_attributes
     { type: 'instagram_direct_message' }
   end

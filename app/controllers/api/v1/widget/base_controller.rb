@@ -20,8 +20,10 @@ class Api::V1::Widget::BaseController < ApplicationController
     @conversation ||= conversations.last
   end
 
+  # A contact is limited to a single conversation by the unique index on
+  # conversations.contact_id, so an existing one is reused across inboxes.
   def create_conversation
-    ::Conversation.create!(conversation_params)
+    @contact.conversations.last || ::Conversation.create!(conversation_params)
   end
 
   def inbox

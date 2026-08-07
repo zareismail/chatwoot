@@ -39,8 +39,9 @@ class Voice::OutboundCallBuilder
     end
   end
 
+  # a contact is limited to a single conversation, so reuse theirs across inboxes
   def create_conversation!(contact_inbox)
-    account.conversations.create!(
+    contact.conversations.last || account.conversations.create!(
       contact_inbox_id: contact_inbox.id,
       inbox_id: inbox.id,
       contact_id: contact.id,

@@ -62,12 +62,8 @@ class Twitter::TweetParserService < Twitter::WebhooksBaseService
   end
 
   def set_conversation
-    tweet_conversations = @contact_inbox.conversations.where("additional_attributes ->> 'tweet_id' = ?", parent_tweet_id)
-    @conversation = tweet_conversations.first
-    return if @conversation
-
-    tweet_message = @inbox.messages.find_by(source_id: parent_tweet_id)
-    @conversation = tweet_message.conversation if tweet_message
+    # a contact is limited to a single conversation, so reuse theirs across inboxes
+    @conversation = @contact_inbox.contact.conversations.last
     return if @conversation
 
     @conversation = ::Conversation.create!(conversation_params)

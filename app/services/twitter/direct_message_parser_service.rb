@@ -82,7 +82,8 @@ class Twitter::DirectMessageParserService < Twitter::WebhooksBaseService
   end
 
   def set_conversation
-    @conversation = @contact_inbox.conversations.where("additional_attributes ->> 'type' = 'direct_message'").first
+    # a contact is limited to a single conversation, so reuse theirs across inboxes
+    @conversation = @contact_inbox.contact.conversations.last
     return if @conversation
 
     @conversation = ::Conversation.create!(conversation_params)
