@@ -77,7 +77,7 @@ const resolveAttributesModalRef = ref(null);
 const bulkMessageDialogRef = ref(null);
 const openBulkMessageDialog = () => bulkMessageDialogRef.value?.open();
 
-const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
+const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ALL);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
 const showAdvancedFilters = ref(false);
@@ -191,6 +191,21 @@ const assigneeTabItems = computed(() => {
     count: conversationStats.value[countKey] || 0,
   }));
 });
+
+// The list defaults to the all tab, which a custom role may not have permission
+// for. Fall back to the first tab they do have so the active one is rendered.
+watch(
+  assigneeTabItems,
+  items => {
+    const isActiveTabAvailable = items.some(
+      item => item.key === activeAssigneeTab.value
+    );
+    if (items.length && !isActiveTabAvailable) {
+      activeAssigneeTab.value = items[0].key;
+    }
+  },
+  { immediate: true }
+);
 
 const showAssigneeInConversationCard = computed(() => {
   return (
