@@ -134,42 +134,44 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div
-      v-if="show && current"
-      class="fixed inset-0 z-[9999] flex flex-col bg-white select-none"
+  <div
+    v-if="show && current"
+    class="fixed inset-0 z-[9999] flex flex-col bg-white select-none"
+  >
+    <header
+      class="flex items-center justify-end gap-1 px-4 py-2.5 shrink-0 border-b border-n-weak bg-white"
     >
-      <header class="flex items-center justify-end gap-1 px-4 py-2.5 shrink-0 border-b border-n-weak bg-white">
-        <button
-          v-if="isImage"
-          :title="$t('IMAGE_GALLERY.ROTATE_COUNTER_CLOCKWISE')"
-          class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
-          @click.stop="rotateCCW"
-        >
-          <i class="i-lucide-rotate-ccw size-4.5" />
-        </button>
-        <button
-          v-if="isImage"
-          :title="$t('IMAGE_GALLERY.ROTATE_CLOCKWISE')"
-          class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
-          @click.stop="rotateCW"
-        >
-          <i class="i-lucide-rotate-cw size-4.5" />
-        </button>
-        <button
-          :title="$t('IMAGE_GALLERY.DOWNLOAD')"
-          class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
-          @click.stop="onDownload"
-        >
-          <i class="i-lucide-download size-4.5" />
-        </button>
-        <button
-          :title="$t('IMAGE_GALLERY.CLOSE')"
-          class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
-          @click.stop="onClose"
-        >
-          <i class="i-lucide-x size-5" />
-        </button>
-      </header>
+      <button
+        v-if="isImage"
+        :title="$t('IMAGE_GALLERY.ROTATE_COUNTER_CLOCKWISE')"
+        class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
+        @click.stop="rotateCCW"
+      >
+        <i class="i-lucide-rotate-ccw size-4.5" />
+      </button>
+      <button
+        v-if="isImage"
+        :title="$t('IMAGE_GALLERY.ROTATE_CLOCKWISE')"
+        class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
+        @click.stop="rotateCW"
+      >
+        <i class="i-lucide-rotate-cw size-4.5" />
+      </button>
+      <button
+        :title="$t('IMAGE_GALLERY.DOWNLOAD')"
+        class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
+        @click.stop="onDownload"
+      >
+        <i class="i-lucide-download size-4.5" />
+      </button>
+      <button
+        :title="$t('IMAGE_GALLERY.CLOSE')"
+        class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
+        @click.stop="onClose"
+      >
+        <i class="i-lucide-x size-5" />
+      </button>
+    </header>
 
     <div
       class="flex flex-1 items-center justify-center overflow-hidden p-4 touch-pan-y"
@@ -229,9 +231,13 @@ onUnmounted(() => {
         :disabled="!hasPrev"
         @click.stop="goToPrev"
       >
-        <i class="ltr:i-lucide-chevron-left rtl:i-lucide-chevron-right size-5" />
+        <i
+          class="ltr:i-lucide-chevron-left rtl:i-lucide-chevron-right size-5"
+        />
       </button>
-      <span class="text-sm text-n-slate-11 min-w-[3rem] text-center tabular-nums">
+      <span
+        class="text-sm text-n-slate-11 min-w-[3rem] text-center tabular-nums"
+      >
         {{ activeIndex + 1 }} / {{ attachments.length }}
       </span>
       <button
@@ -240,7 +246,9 @@ onUnmounted(() => {
         :disabled="!hasNext"
         @click.stop="goToNext"
       >
-        <i class="ltr:i-lucide-chevron-right rtl:i-lucide-chevron-left size-5" />
+        <i
+          class="ltr:i-lucide-chevron-right rtl:i-lucide-chevron-left size-5"
+        />
       </button>
     </footer>
   </div>
