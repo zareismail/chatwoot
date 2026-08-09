@@ -3,6 +3,8 @@ import { groupBy } from 'widget/helpers/utils';
 import { groupConversationBySender } from './helpers';
 import { formatUnixDate } from 'shared/helpers/DateHelper';
 
+const GALLERY_FILE_TYPES = ['image', 'video', 'audio', 'file'];
+
 export const getters = {
   getAllMessagesLoaded: _state => _state.uiFlags.allMessagesLoaded,
   getIsCreating: _state => _state.uiFlags.isCreating,
@@ -50,20 +52,24 @@ export const getters = {
       return hasNotSeen && isOutGoing;
     }).length;
   },
-  getAllImageAttachments: _state => {
-    return Object.values(_state.conversations).reduce((images, message) => {
-      if (message.attachments) {
-        message.attachments.forEach(attachment => {
-          if (attachment.file_type === 'image') {
-            images.push({
-              data_url: attachment.data_url,
-              message_id: message.id,
-            });
-          }
-        });
-      }
-      return images;
-    }, []);
+  getAllAttachments: _state => {
+    return Object.values(_state.conversations).reduce(
+      (attachments, message) => {
+        if (message.attachments) {
+          message.attachments.forEach(attachment => {
+            if (GALLERY_FILE_TYPES.includes(attachment.file_type)) {
+              attachments.push({
+                data_url: attachment.data_url,
+                file_type: attachment.file_type,
+                message_id: message.id,
+              });
+            }
+          });
+        }
+        return attachments;
+      },
+      []
+    );
   },
   getUnreadTextMessages: (_state, _getters) => {
     const unreadCount = _getters.getUnreadMessageCount;

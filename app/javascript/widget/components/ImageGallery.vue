@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
-  images: { type: Array, default: () => [] },
+  attachments: { type: Array, default: () => [] },
   startIndex: { type: Number, default: 0 },
 });
 
@@ -26,10 +26,21 @@ let touchStartX = 0;
 
 const SWIPE_THRESHOLD = 60;
 
-const currentImage = computed(() => props.images[activeIndex.value] || null);
-const hasMultiple = computed(() => props.images.length > 1);
+const current = computed(() => props.attachments[activeIndex.value] || null);
+const hasMultiple = computed(() => props.attachments.length > 1);
 const hasPrev = computed(() => activeIndex.value > 0);
-const hasNext = computed(() => activeIndex.value < props.images.length - 1);
+const hasNext = computed(
+  () => activeIndex.value < props.attachments.length - 1
+);
+
+const isImage = computed(() => current.value?.file_type === 'image');
+const isVideo = computed(() => current.value?.file_type === 'video');
+const isAudio = computed(() => current.value?.file_type === 'audio');
+
+const fileName = computed(() => {
+  const url = current.value?.data_url || '';
+  return decodeURI(url.substring(url.lastIndexOf('/') + 1));
+});
 
 const goToPrev = () => {
   if (hasPrev.value) {
@@ -61,6 +72,9 @@ const onClose = () => {
 
 const onTouchStart = e => {
   if (!hasMultiple.value || e.touches.length !== 1) return;
+  // Native media controls own their horizontal drags, so a swipe starting on a
+  // seek bar has to scrub rather than move to the next attachment.
+  if (e.target.closest('video, audio')) return;
   touchStartX = e.touches[0].clientX;
   isDragging.value = true;
 };
@@ -90,12 +104,12 @@ const handleHostBack = () => {
 };
 
 const onDownload = () => {
-  if (!currentImage.value) return;
-  const url = currentImage.value.data_url;
+  if (!current.value) return;
+  const url = current.value.data_url;
   const a = document.createElement('a');
   a.href = url;
   a.target = '_blank';
-  a.download = url.split('/').pop() || 'image';
+  a.download = fileName.value || 'file';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -121,11 +135,12 @@ onUnmounted(() => {
 
 <template>
     <div
-      v-if="show && currentImage"
+      v-if="show && current"
       class="fixed inset-0 z-[9999] flex flex-col bg-white select-none"
     >
       <header class="flex items-center justify-end gap-1 px-4 py-2.5 shrink-0 border-b border-n-weak bg-white">
         <button
+          v-if="isImage"
           :title="$t('IMAGE_GALLERY.ROTATE_COUNTER_CLOCKWISE')"
           class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
           @click.stop="rotateCCW"
@@ -133,6 +148,7 @@ onUnmounted(() => {
           <i class="i-lucide-rotate-ccw size-4.5" />
         </button>
         <button
+          v-if="isImage"
           :title="$t('IMAGE_GALLERY.ROTATE_CLOCKWISE')"
           class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
           @click.stop="rotateCW"
@@ -156,25 +172,51 @@ onUnmounted(() => {
       </header>
 
     <div
-      class="flex flex-1 items-center justify-center overflow-hidden p-4 touch-none"
+      class="flex flex-1 items-center justify-center overflow-hidden p-4 touch-pan-y"
       @touchstart="onTouchStart"
       @touchmove="onTouchMove"
       @touchend="onTouchEnd"
       @touchcancel="onTouchEnd"
     >
-      <img
-        :key="currentImage.data_url"
-        :src="currentImage.data_url"
-        class="max-h-full max-w-full object-contain"
+      <div
+        :key="current.data_url"
+        class="flex max-h-full max-w-full items-center justify-center"
         :class="{
           'transition-transform duration-200 ease-in-out': !isDragging,
         }"
-        :style="{
-          transform: `translateX(${dragX}px) rotate(${rotation}deg)`,
-        }"
-        alt=""
+        :style="{ transform: `translateX(${dragX}px)` }"
         @click.stop
-      />
+      >
+        <img
+          v-if="isImage"
+          :src="current.data_url"
+          class="max-h-full max-w-full object-contain transition-transform duration-200 ease-in-out"
+          :style="{ transform: `rotate(${rotation}deg)` }"
+          alt=""
+        />
+        <video
+          v-else-if="isVideo"
+          :src="`${current.data_url}#t=0.001`"
+          class="max-h-full max-w-full"
+          controls
+          preload="metadata"
+        />
+        <audio
+          v-else-if="isAudio"
+          :src="current.data_url"
+          class="w-64 max-w-full"
+          controls
+        />
+        <div
+          v-else
+          class="flex flex-col items-center gap-3 px-6 text-n-slate-11"
+        >
+          <i class="i-lucide-file size-16" />
+          <span class="max-w-64 break-all text-center text-sm">
+            {{ fileName }}
+          </span>
+        </div>
+      </div>
     </div>
 
     <footer
@@ -190,7 +232,7 @@ onUnmounted(() => {
         <i class="ltr:i-lucide-chevron-left rtl:i-lucide-chevron-right size-5" />
       </button>
       <span class="text-sm text-n-slate-11 min-w-[3rem] text-center tabular-nums">
-        {{ activeIndex + 1 }} / {{ images.length }}
+        {{ activeIndex + 1 }} / {{ attachments.length }}
       </span>
       <button
         :title="$t('IMAGE_GALLERY.NEXT')"

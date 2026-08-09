@@ -18,7 +18,7 @@ export default {
   computed: {
     ...mapGetters({
       groupedMessages: 'conversation/getGroupedConversation',
-      allImageAttachments: 'conversation/getAllImageAttachments',
+      allAttachments: 'conversation/getAllAttachments',
     }),
   },
   mounted() {
@@ -30,8 +30,8 @@ export default {
   },
   methods: {
     onOpenGallery(url) {
-      const index = this.allImageAttachments.findIndex(
-        img => img.data_url === url
+      const index = this.allAttachments.findIndex(
+        attachment => attachment.data_url === url
       );
       if (index !== -1) {
         this.galleryStartIndex = index;
@@ -55,7 +55,7 @@ export default {
     <ChatFooter class="px-5" />
     <ImageGallery
       v-model:show="showGallery"
-      :images="allImageAttachments"
+      :attachments="allAttachments"
       :start-index="galleryStartIndex"
       @close="onCloseGallery"
     />
