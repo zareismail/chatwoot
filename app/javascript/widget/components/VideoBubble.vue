@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { computed } from 'vue';
+
+const props = defineProps({
   url: { type: String, default: '' },
   readableTime: { type: String, default: '' },
 });
@@ -18,14 +20,22 @@ const onVideoError = () => {
 const releaseFocus = () => {
   document.activeElement?.blur();
 };
+
+// Android only fetches container metadata and never decodes a frame, so the
+// bubble stays black until playback starts. Pointing at the very first frame
+// makes it seek there, which forces that frame to be decoded and painted.
+const previewUrl = computed(() =>
+  props.url ? `${props.url}#t=0.001` : props.url
+);
 </script>
 
 <template>
   <div class="relative block max-w-full">
     <video
       class="w-full max-w-[250px] h-auto"
-      :src="url"
+      :src="previewUrl"
       controls
+      preload="metadata"
       @play="releaseFocus"
       @pause="releaseFocus"
       @seeking="releaseFocus"
