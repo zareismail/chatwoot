@@ -5,3 +5,9 @@ Change the image used in the pod by new image tag
 All image tagged by date like `2026-07-23_09-09`
 After changing the image tag and restarting pod, may need to run migration for chatwoot db.
 `sidekiq` and chatwoot `app` using same image
+
+
+
+--
+
+On the local to seed the database you can use `docker compose run --rm rails bundle exec rails db:seed` 
