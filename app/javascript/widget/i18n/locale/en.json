@@ -170,6 +170,8 @@
     "START": "Start recording",
     "STOP": "Stop recording",
     "CANCEL": "Cancel recording",
+    "SEND": "Send voice message",
+    "DISCARD": "Discard recording",
     "PERMISSION_DENIED": "Microphone access was denied. Please allow microphone access and try again.",
     "ERROR": "Recording failed. Please try again.",
     "UNSUPPORTED": "Voice recording is not supported in your browser.",

@@ -23,7 +23,8 @@ export default {
   emits: ['recording-state-changed'],
   data() {
     return {
-      recordingState: 'idle', // 'idle' | 'recording' | 'denied' | 'error'
+      // 'idle' | 'recording' | 'preview' | 'denied' | 'error'
+      recordingState: 'idle',
       mediaRecorder: null,
       recordedChunks: [],
       recordingTimer: 0,
@@ -32,6 +33,8 @@ export default {
       stream: null,
       isSupported: true,
       isUploading: false,
+      previewFile: null,
+      previewUrl: '',
     };
   },
   computed: {
@@ -49,6 +52,9 @@ export default {
     isRecording() {
       return this.recordingState === 'recording';
     },
+    isPreview() {
+      return this.recordingState === 'preview';
+    },
     isError() {
       return (
         this.recordingState === 'denied' || this.recordingState === 'error'
@@ -63,6 +69,9 @@ export default {
   },
   beforeUnmount() {
     this.cleanup();
+    if (this.previewUrl) {
+      URL.revokeObjectURL(this.previewUrl);
+    }
   },
   methods: {
     determineMimeType() {
@@ -164,9 +173,8 @@ export default {
     handleRecordingStop() {
       this.stopTimer();
 
-      const blob = new Blob(this.recordedChunks, {
-        type: this.mediaRecorder.mimeType,
-      });
+      const mimeType = this.mediaRecorder.mimeType || 'audio/webm';
+      const blob = new Blob(this.recordedChunks, { type: mimeType });
 
       if (blob.size < 100) {
         this.cleanup();
@@ -175,15 +183,26 @@ export default {
         return;
       }
 
-      const mimeType = this.mediaRecorder.mimeType || 'audio/webm';
       const extension = mimeType.includes('mp4') ? 'm4a' : 'webm';
-      const file = new File([blob], `voice-message-${Date.now()}.${extension}`, {
-        type: mimeType,
-      });
-
-      const thumbUrl = URL.createObjectURL(blob);
+      this.previewFile = new File(
+        [blob],
+        `voice-message-${Date.now()}.${extension}`,
+        { type: mimeType }
+      );
+      this.previewUrl = URL.createObjectURL(blob);
 
       this.cleanup();
+      // Hold the take so it can be played back before it goes anywhere. The
+      // parent stays in its recording layout until the user sends or discards.
+      this.recordingState = 'preview';
+    },
+    sendRecording() {
+      const file = this.previewFile;
+      const thumbUrl = this.previewUrl;
+
+      // The bubble renders from thumbUrl, so hand it over rather than revoking.
+      this.previewFile = null;
+      this.previewUrl = '';
       this.recordingState = 'idle';
       this.$emit('recording-state-changed', false);
 
@@ -196,6 +215,13 @@ export default {
           fileType: 'audio',
         });
       }
+    },
+    discardRecording() {
+      URL.revokeObjectURL(this.previewUrl);
+      this.previewFile = null;
+      this.previewUrl = '';
+      this.recordingState = 'idle';
+      this.$emit('recording-state-changed', false);
     },
     uploadViaDirectUpload(file, thumbUrl) {
       this.isUploading = true;
@@ -280,6 +306,24 @@ export default {
         @click="cancelRecording"
       >
         <FluentIcon icon="dismiss" size="18" />
+      </button>
+    </div>
+
+    <div v-if="isPreview" class="voice-preview flex items-center gap-1.5">
+      <audio :src="previewUrl" controls class="h-8 max-w-[180px]" />
+      <button
+        class="min-h-8 min-w-8 flex items-center justify-center text-n-slate-12"
+        :aria-label="$t('VOICE_RECORDER.DISCARD')"
+        @click="discardRecording"
+      >
+        <FluentIcon icon="dismiss" size="18" />
+      </button>
+      <button
+        class="min-h-8 min-w-8 flex items-center justify-center text-n-brand"
+        :aria-label="$t('VOICE_RECORDER.SEND')"
+        @click="sendRecording"
+      >
+        <FluentIcon icon="send" size="18" />
       </button>
     </div>
 
