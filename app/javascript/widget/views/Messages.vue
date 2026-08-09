@@ -6,6 +6,7 @@ import ConversationWrap from '../components/ConversationWrap.vue';
 import ImageGallery from '../components/ImageGallery.vue';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { emitter } from 'shared/helpers/mitt';
+import { IFrameHelper } from 'widget/helpers/utils';
 
 export default {
   components: { ChatFooter, ConversationWrap, ImageGallery },
@@ -19,10 +20,27 @@ export default {
     ...mapGetters({
       groupedMessages: 'conversation/getGroupedConversation',
       allAttachments: 'conversation/getAllAttachments',
+      isWidgetOpen: 'appConfig/getIsWidgetOpen',
     }),
+    // The host page boots the widget into a hidden iframe on every load, and
+    // `/` redirects straight here, so mounting is no sign the reader saw
+    // anything. Outside an iframe — the mobile app, the popout — this view is
+    // only ever mounted because it is being looked at.
+    isBeingRead() {
+      return this.isWidgetOpen || !IFrameHelper.isIFrame();
+    },
+  },
+  watch: {
+    isBeingRead: {
+      immediate: true,
+      handler(isBeingRead) {
+        if (isBeingRead) {
+          this.$store.dispatch('conversation/setUserLastSeen');
+        }
+      },
+    },
   },
   mounted() {
-    this.$store.dispatch('conversation/setUserLastSeen');
     emitter.on(BUS_EVENTS.OPEN_GALLERY, this.onOpenGallery);
   },
   unmounted() {

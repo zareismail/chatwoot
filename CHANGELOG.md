@@ -47,6 +47,13 @@ rebuilt too.
 
 ### Widget — fixed
 
+- **Opening a page no longer marks the conversation as read.** The host page boots the
+  widget into a hidden iframe on every load, and this fork sends `/` straight to the
+  message view, so simply landing on the home page cleared the unread badge for messages
+  nobody had seen. The conversation is now marked read when the widget is actually opened,
+  and each time it is reopened. Outside an iframe — the mobile app, the popout — the
+  message view is only ever shown because someone is looking at it, so it still marks read
+  on load.
 - **Video attachments no longer render as a black box on Android.** Android Chromium
   treats `preload="metadata"` as container metadata only and never decodes a frame, where
   desktop Chrome paints the first one. The source now carries a `#t=0.001` media fragment,
