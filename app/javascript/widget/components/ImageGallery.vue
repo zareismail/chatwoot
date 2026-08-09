@@ -12,19 +12,38 @@ const show = defineModel('show', { type: Boolean, default: false });
 const activeIndex = ref(props.startIndex);
 const rotation = ref(0);
 
-watch(
-  () => props.startIndex,
-  val => {
-    activeIndex.value = val;
-    rotation.value = 0;
-  }
-);
-
+const scale = ref(1);
 const dragX = ref(0);
 const isDragging = ref(false);
 let touchStartX = 0;
 
 const SWIPE_THRESHOLD = 60;
+const MIN_SCALE = 1;
+const MAX_SCALE = 4;
+const ZOOM_STEP = 0.5;
+
+const isZoomed = computed(() => scale.value > MIN_SCALE);
+
+const resetView = () => {
+  rotation.value = 0;
+  scale.value = MIN_SCALE;
+};
+
+const zoomIn = () => {
+  scale.value = Math.min(scale.value + ZOOM_STEP, MAX_SCALE);
+};
+
+const zoomOut = () => {
+  scale.value = Math.max(scale.value - ZOOM_STEP, MIN_SCALE);
+};
+
+watch(
+  () => props.startIndex,
+  val => {
+    activeIndex.value = val;
+    resetView();
+  }
+);
 
 const current = computed(() => props.attachments[activeIndex.value] || null);
 const hasMultiple = computed(() => props.attachments.length > 1);
@@ -45,14 +64,14 @@ const fileName = computed(() => {
 const goToPrev = () => {
   if (hasPrev.value) {
     activeIndex.value -= 1;
-    rotation.value = 0;
+    resetView();
   }
 };
 
 const goToNext = () => {
   if (hasNext.value) {
     activeIndex.value += 1;
-    rotation.value = 0;
+    resetView();
   }
 };
 
@@ -66,7 +85,7 @@ const rotateCCW = () => {
 
 const onClose = () => {
   show.value = false;
-  rotation.value = 0;
+  resetView();
   emit('close');
 };
 
@@ -75,6 +94,8 @@ const onTouchStart = e => {
   // Native media controls own their horizontal drags, so a swipe starting on a
   // seek bar has to scrub rather than move to the next attachment.
   if (e.target.closest('video, audio')) return;
+  // A zoomed image scrolls inside its container instead of changing slides.
+  if (isZoomed.value) return;
   touchStartX = e.touches[0].clientX;
   isDragging.value = true;
 };
@@ -143,6 +164,24 @@ onUnmounted(() => {
     >
       <button
         v-if="isImage"
+        :title="$t('IMAGE_GALLERY.ZOOM_OUT')"
+        class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        :disabled="scale <= MIN_SCALE"
+        @click.stop="zoomOut"
+      >
+        <i class="i-lucide-zoom-out size-4.5" />
+      </button>
+      <button
+        v-if="isImage"
+        :title="$t('IMAGE_GALLERY.ZOOM_IN')"
+        class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        :disabled="scale >= MAX_SCALE"
+        @click.stop="zoomIn"
+      >
+        <i class="i-lucide-zoom-in size-4.5" />
+      </button>
+      <button
+        v-if="isImage"
         :title="$t('IMAGE_GALLERY.ROTATE_COUNTER_CLOCKWISE')"
         class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
         @click.stop="rotateCCW"
@@ -174,7 +213,8 @@ onUnmounted(() => {
     </header>
 
     <div
-      class="flex flex-1 items-center justify-center overflow-hidden p-4 touch-pan-y"
+      class="flex flex-1 items-center justify-center p-4 touch-pan-y"
+      :class="isZoomed ? 'overflow-auto' : 'overflow-hidden'"
       @touchstart="onTouchStart"
       @touchmove="onTouchMove"
       @touchend="onTouchEnd"
@@ -193,7 +233,7 @@ onUnmounted(() => {
           v-if="isImage"
           :src="current.data_url"
           class="max-h-full max-w-full object-contain transition-transform duration-200 ease-in-out"
-          :style="{ transform: `rotate(${rotation}deg)` }"
+          :style="{ transform: `rotate(${rotation}deg) scale(${scale})` }"
           alt=""
         />
         <video

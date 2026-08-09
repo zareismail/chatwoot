@@ -153,6 +153,8 @@
     "FULLSCREEN": "نمایش تمام‌صفحه",
     "CLOSE": "بستن",
     "DOWNLOAD": "دانلود",
+    "ZOOM_IN": "بزرگ‌نمایی",
+    "ZOOM_OUT": "کوچک‌نمایی",
     "ROTATE_CLOCKWISE": "چرخش ساعت‌گرد",
     "ROTATE_COUNTER_CLOCKWISE": "چرخش پادساعت‌گرد",
     "PREVIOUS": "تصویر قبلی",

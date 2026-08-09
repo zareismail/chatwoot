@@ -158,6 +158,8 @@
     "FULLSCREEN": "View fullscreen",
     "CLOSE": "Close",
     "DOWNLOAD": "Download",
+    "ZOOM_IN": "Zoom in",
+    "ZOOM_OUT": "Zoom out",
     "ROTATE_CLOCKWISE": "Rotate clockwise",
     "ROTATE_COUNTER_CLOCKWISE": "Rotate counter-clockwise",
     "PREVIOUS": "Previous image",
