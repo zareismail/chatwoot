@@ -20,6 +20,12 @@ watch(
   }
 );
 
+const dragX = ref(0);
+const isDragging = ref(false);
+let touchStartX = 0;
+
+const SWIPE_THRESHOLD = 60;
+
 const currentImage = computed(() => props.images[activeIndex.value] || null);
 const hasMultiple = computed(() => props.images.length > 1);
 const hasPrev = computed(() => activeIndex.value > 0);
@@ -53,6 +59,36 @@ const onClose = () => {
   emit('close');
 };
 
+const onTouchStart = e => {
+  if (!hasMultiple.value || e.touches.length !== 1) return;
+  touchStartX = e.touches[0].clientX;
+  isDragging.value = true;
+};
+
+const onTouchMove = e => {
+  if (!isDragging.value) return;
+  dragX.value = e.touches[0].clientX - touchStartX;
+};
+
+const onTouchEnd = () => {
+  if (!isDragging.value) return;
+  isDragging.value = false;
+  if (dragX.value <= -SWIPE_THRESHOLD) {
+    goToNext();
+  } else if (dragX.value >= SWIPE_THRESHOLD) {
+    goToPrev();
+  }
+  dragX.value = 0;
+};
+
+// The Android host asks the page whether it wants the back press before it
+// closes the chat, so the gallery can consume it and stay in the conversation.
+const handleHostBack = () => {
+  if (!show.value) return false;
+  onClose();
+  return true;
+};
+
 const onDownload = () => {
   if (!currentImage.value) return;
   const url = currentImage.value.data_url;
@@ -74,10 +110,12 @@ const handleKeydown = e => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
+  window.chatwootHandleHostBack = handleHostBack;
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
+  delete window.chatwootHandleHostBack;
 });
 </script>
 
@@ -117,12 +155,23 @@ onUnmounted(() => {
         </button>
       </header>
 
-    <div class="flex flex-1 items-center justify-center overflow-hidden p-4">
+    <div
+      class="flex flex-1 items-center justify-center overflow-hidden p-4 touch-none"
+      @touchstart="onTouchStart"
+      @touchmove="onTouchMove"
+      @touchend="onTouchEnd"
+      @touchcancel="onTouchEnd"
+    >
       <img
         :key="currentImage.data_url"
         :src="currentImage.data_url"
-        class="max-h-full max-w-full object-contain transition-transform duration-200 ease-in-out"
-        :style="{ transform: `rotate(${rotation}deg)` }"
+        class="max-h-full max-w-full object-contain"
+        :class="{
+          'transition-transform duration-200 ease-in-out': !isDragging,
+        }"
+        :style="{
+          transform: `translateX(${dragX}px) rotate(${rotation}deg)`,
+        }"
         alt=""
         @click.stop
       />
