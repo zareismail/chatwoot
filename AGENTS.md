@@ -1,6 +1,6 @@
 # Chatwoot Development Guidelines
 
-This is the shared guidance file for coding agents working in this repository (`CLAUDE.md` and `.windsurf/rules/chatwoot.md` mirror it — keep them in sync when editing).
+`AGENTS.md` is the single guidance file for every coding agent working in this repository, and the only one to edit. `CLAUDE.md` imports it with `@AGENTS.md`, and `.windsurf/rules/chatwoot.md` is a symlink to it — so a tool that expects its own path still reads these guidelines, and there is never a second version to keep in sync.
 
 This repo is the **ragham** fork of Chatwoot. Working branch is `ragham`; `develop` is the upstream-tracking base branch.
 
@@ -146,9 +146,31 @@ Path aliases (defined once in `vite.shared.ts`, shared by `vite.config.ts` and `
 
 ## Commit Messages
 
+- **Never commit without explicit acceptance.** Finish the change, verify it, report what
+  is left in the working tree, and stop. Wait for the user to say "commit it" (or
+  equivalent) before running `git commit`. The same applies to `git push` — approval to
+  commit is not approval to push.
+- Commit with explicit pathspecs (`git commit -o <files>`), never `git commit -a` or
+  `git add .`, so deliberately-dirty files are not swept in. `docker/entrypoints/vite.sh`
+  in particular must stay modified-but-uncommitted.
 - Prefer Conventional Commits: `type(scope): subject` (scope optional)
 - Example: `feat(auth): add user authentication`
 - Don't reference Claude in commit messages
+
+## Changelog
+
+- **Every user-facing change gets an entry in `CHANGELOG.md`**, written as part of the
+  change rather than afterwards.
+- Group entries by the date the work landed, newest first, then by surface
+  (Widget / Dashboard / Backend / Android app) and by `Added` / `Changed` / `Fixed` /
+  `Removed`.
+- Describe the behaviour the user sees and why it changed, not the implementation. Name
+  the symptom a fix removes.
+- Call out anything that silently changes behaviour — a removed setting, a dropped
+  grouping — under `Removed`, since nobody gets an error for relying on it.
+- Record constraints a reader would otherwise hit: what a fix depends on, and where a
+  change needs a deploy or a companion Android build to take effect.
+- Skip housekeeping with nothing user-facing: formatting passes, reindents, README tweaks.
 
 ## PR Description Format
 
