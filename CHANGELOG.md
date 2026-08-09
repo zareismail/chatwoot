@@ -87,6 +87,12 @@ opts in, which is why they failed only inside the app.
 - **Back closes what is on top.** Back used to close the whole chat from inside the image
   gallery and from fullscreen video. It now exits fullscreen first, then offers the press
   to the page, and only finishes the activity when nothing claims it.
+- **The support badge no longer counts messages the reader just watched arrive.** The app
+  keeps its own connection and unread tracker behind that badge, separate from the widget,
+  and it was told the conversation had been read only once, when the chat first opened.
+  Anything that arrived while the reader sat in the chat kept counting, and the badge was
+  waiting for them on the way out. Messages are now marked read as they arrive, for as long
+  as the chat is the screen in front.
 
 ---
 
