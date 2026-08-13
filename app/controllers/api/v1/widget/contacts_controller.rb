@@ -49,7 +49,18 @@ class Api::V1::Widget::ContactsController < Api::V1::Widget::BaseController
   def validate_hmac
     return unless should_verify_hmac?
 
-    render json: { error: 'HMAC failed: Invalid Identifier Hash Provided' }, status: :unauthorized unless valid_hmac?
+    return if valid_hmac?
+
+    Rails.logger.error(
+      "[chatwoot][hmac] HMAC validation failed widget_id=#{@web_widget.id} " \
+      "website_token=#{params[:website_token].inspect} " \
+      "hmac_mandatory=#{@web_widget.hmac_mandatory} " \
+      "identifier=#{params[:identifier].inspect} " \
+      "received_identifier_hash=#{params[:identifier_hash].inspect} " \
+      "expected_identifier_hash=#{OpenSSL::HMAC.hexdigest('sha256', @web_widget.hmac_token, params[:identifier].to_s)} " \
+      "request_id=#{request.request_id}"
+    )
+    render json: { error: 'HMAC failed: Invalid Identifier Hash Provided' }, status: :unauthorized
   end
 
   def should_verify_hmac?
