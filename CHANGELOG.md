@@ -21,6 +21,29 @@ their own APK build.
 
 ---
 
+## 2026-08-17
+
+### Widget — fixed
+
+- **Images in the conversation can be saved again.** Tapping an image used to open the
+  file itself, which is how it reached the phone's downloader; once tapping started
+  opening the gallery instead, nothing in the message list led to the file any more. Each
+  image now carries a `Download` link underneath it, the same link a file attachment has
+  always had.
+
+  An agent's image appeared to keep its download button through all of this, and a
+  visitor's did not, which made the loss look like it only affected one side. The button
+  under an agent image was in fact a whole second attachment bubble rendering on top of
+  the image by accident, from a branch that had been written as `v-if` where it needed to
+  continue the one above it. That duplicate is gone; both sides now use the same link.
+- **The gallery download button downloads.** It built a link in script and clicked it,
+  which the Android WebView ignores because that click carries no user gesture — the
+  button appeared to do nothing at all. It is now a real link, identical to the one under
+  the image, so it goes through the same path that already works. It covers every
+  attachment the gallery shows, not just images.
+
+---
+
 ## 2026-08-09
 
 Widget work driven by how the chat behaves inside the Android app. Several of the fixes

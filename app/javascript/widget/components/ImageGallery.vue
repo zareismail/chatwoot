@@ -124,18 +124,6 @@ const handleHostBack = () => {
   return true;
 };
 
-const onDownload = () => {
-  if (!current.value) return;
-  const url = current.value.data_url;
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.download = fileName.value || 'file';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
-
 const handleKeydown = e => {
   if (!show.value) return;
   if (e.key === 'Escape') onClose();
@@ -196,13 +184,15 @@ onUnmounted(() => {
       >
         <i class="i-lucide-rotate-cw size-4.5" />
       </button>
-      <button
+      <a
+        :href="current.data_url"
+        target="_blank"
+        rel="noreferrer noopener nofollow"
         :title="$t('IMAGE_GALLERY.DOWNLOAD')"
         class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"
-        @click.stop="onDownload"
       >
         <i class="i-lucide-download size-4.5" />
-      </button>
+      </a>
       <button
         :title="$t('IMAGE_GALLERY.CLOSE')"
         class="flex items-center justify-center w-8 h-8 rounded text-n-slate-11 hover:bg-n-slate-3 transition-colors"

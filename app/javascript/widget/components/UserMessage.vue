@@ -146,6 +146,8 @@ export default {
                   :url="attachment.data_url"
                   :thumb="attachment.data_url"
                   :readable-time="readableTime"
+                  :widget-color="widgetColor"
+                  is-user-bubble
                   @error="onImageLoadError"
                   @open-gallery="onOpenGallery"
                 />
