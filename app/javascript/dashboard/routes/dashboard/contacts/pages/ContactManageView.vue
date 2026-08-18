@@ -23,7 +23,7 @@ const router = useRouter();
 const contact = useMapGetter('contacts/getContactById');
 const uiFlags = useMapGetter('contacts/getUIFlags');
 
-const activeTab = ref('attributes');
+const activeTab = ref('history');
 const contactMergeRef = ref(null);
 
 const isFetchingItem = computed(() => uiFlags.value.isFetchingItem);
