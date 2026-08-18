@@ -184,9 +184,15 @@ Path aliases (defined once in `vite.shared.ts`, shared by `vite.config.ts` and `
 ## Project-Specific
 
 - **Translations**:
-  - Only update `en.yml` and `en.json`
-  - Other languages are handled by the community
   - Backend i18n → `en.yml`, Frontend i18n → `en.json`
+  - **A string this fork adds must land in both English and Persian, in the same change.**
+    This is a Persian product, and the community only translates keys that exist upstream —
+    a key that only exists here will never be picked up, so English leaks into the UI.
+    Dashboard keys go in `app/javascript/dashboard/i18n/locale/{en,fa}/<file>.json`, widget
+    keys in `app/javascript/widget/i18n/locale/{en,fa}.json`, backend keys in
+    `config/locales/{en,fa}.yml`. Keep the key sets identical between the two.
+  - Locales other than `en` and `fa` stay the community's, and so do upstream strings that
+    are still untranslated in `fa` — do not translate keys the fork did not add.
 - **Frontend**:
   - Use `components-next/` for message bubbles (the rest is being deprecated)
 
