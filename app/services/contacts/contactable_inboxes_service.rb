@@ -26,10 +26,12 @@ class Contacts::ContactableInboxesService
   end
 
   def website_contactable_inbox(inbox)
+    # A contact can only ever have one conversation (unique index on
+    # conversations.contact_id), and ConversationBuilder already reuses that
+    # existing conversation regardless of which contact_inbox is passed in,
+    # so there's no need to hide this inbox once a conversation exists.
     latest_contact_inbox = inbox.contact_inboxes.where(contact: @contact).last
     return unless latest_contact_inbox
-    # FIXME : change this when multiple conversations comes in
-    return if latest_contact_inbox.conversations.present?
 
     { source_id: latest_contact_inbox.source_id, inbox: inbox }
   end
