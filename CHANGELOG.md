@@ -42,6 +42,50 @@ their own APK build.
   the image, so it goes through the same path that already works. It covers every
   attachment the gallery shows, not just images.
 
+### Dashboard — added
+
+- **A Phone changes tab on the contact page.** It lists every number the contact has been
+  given, newest first: the number it replaced, the new one, and when it happened. A number
+  taken away to give to another contact shows as removed and names the contact that took
+  it. Contacts whose number has never been changed — most of them — see an empty tab.
+
+### Backend — added
+
+- **A contact can be updated by its identifier.**
+  `PATCH /api/v1/accounts/:account_id/contacts/by_identifier` takes the identifier the
+  apps already set on a contact — the RGHM user id — and applies the name, email or phone
+  number sent with it to whichever contact carries that identifier. It answers 404 when no
+  contact has it, which is the normal answer for someone who has never opened support.
+
+  This exists so support changing a phone number in the RGHM admin panel is reflected in
+  Chatwoot. Until now the contact kept the old number until the customer next opened the
+  widget, so an agent searching by the number the customer just gave them found nothing.
+  The hourly job that calls it lives in the `cron-jobs` repository.
+
+  That job covers every number changed since this installation went live rather than only
+  recent ones, so the backlog from before it existed is corrected on its first run — a
+  contact is created carrying whatever number the customer had at the time, so nothing
+  before that can be wrong. It remembers what it has already sent, so a number reaches
+  Chatwoot once rather than every hour, and a failed send is retried on the next run.
+
+- **Every forced phone-number change is kept on the contact.** The old number, the new one
+  and the time are appended to a `phone_number_history` list in the contact's additional
+  attributes — on the contact that gained the number, and on any contact the number was
+  taken from, so a cleared number can still be traced back. Nothing is recorded when the
+  number sent matches the one the contact already has, so a repeated sync does not fill the
+  list with noise.
+
+  Only this endpoint writes that list. An agent editing a number by hand, or the widget
+  identifying a visitor through `setUser`, leaves no entry.
+
+- **A number moved onto a contact is taken off any other contact holding it.** Upstream a
+  phone number belongs to one user at a time, so a contact still carrying the number being
+  assigned is out of date by definition. Without this the update was refused outright, and
+  two customers who had their numbers swapped could never be corrected: each one's new
+  number was held by the other, so neither could go first. The contact left without a
+  number gets it back the next time that customer opens the widget, if it really is
+  theirs.
+
 ---
 
 ## 2026-08-09

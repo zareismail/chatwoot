@@ -513,7 +513,8 @@
         "HISTORY": "History",
         "NOTES": "Notes",
         "MEDIA": "Media",
-        "MERGE": "Merge"
+        "MERGE": "Merge",
+        "PHONE_CHANGES": "Phone"
       },
       "HISTORY": {
         "EMPTY_STATE": "There are no previous conversations associated to this contact"
@@ -574,6 +575,12 @@
         "NO_NOTES": "No notes, you can add notes from the contact details page.",
         "EMPTY_STATE": "There are no notes associated to this contact. You can add a note by typing in the box above.",
         "CONVERSATION_EMPTY_STATE": "There are no notes yet. Use the Add note button to create one."
+      },
+      "PHONE_CHANGES": {
+        "EMPTY_STATE": "This contact's phone number has not been changed.",
+        "NONE": "No number",
+        "CLEARED": "Number removed",
+        "RELEASED_TO": "given to the contact {identifier}"
       }
     },
     "EMPTY_STATE": {
@@ -610,7 +617,6 @@
       "CONFIRM_SINGLE": "Delete contact"
     }
   },
-
   "COMPOSE_NEW_CONVERSATION": {
     "CONTACT_SEARCH": {
       "ERROR_MESSAGE": "We couldn’t complete the search. Please try again."

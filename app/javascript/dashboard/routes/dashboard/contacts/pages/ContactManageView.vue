@@ -14,6 +14,7 @@ import ContactHistory from 'dashboard/components-next/Contacts/ContactsSidebar/C
 import ContactMedia from 'dashboard/components-next/Contacts/ContactsSidebar/ContactMedia.vue';
 import ContactMerge from 'dashboard/components-next/Contacts/ContactsSidebar/ContactMerge.vue';
 import ContactCustomAttributes from 'dashboard/components-next/Contacts/ContactsSidebar/ContactCustomAttributes.vue';
+import ContactPhoneChanges from 'dashboard/components-next/Contacts/ContactsSidebar/ContactPhoneChanges.vue';
 
 const store = useStore();
 const route = useRoute();
@@ -40,6 +41,7 @@ const { t } = useI18n();
 const CONTACT_TABS_OPTIONS = [
   { key: 'ATTRIBUTES', value: 'attributes' },
   { key: 'HISTORY', value: 'history' },
+  { key: 'PHONE_CHANGES', value: 'phoneChanges' },
   { key: 'NOTES', value: 'notes' },
   { key: 'MEDIA', value: 'media' },
   { key: 'MERGE', value: 'merge' },
@@ -156,7 +158,7 @@ onMounted(() => {
           <TabBar
             :tabs="tabs"
             :initial-active-tab="activeTabIndex"
-            class="w-full [&>button]:w-full bg-n-alpha-black2"
+            class="w-full [&>button]:w-full [&>button]:!px-2 bg-n-alpha-black2"
             @tab-changed="handleTabChange"
           />
         </div>
@@ -175,6 +177,10 @@ onMounted(() => {
           />
           <ContactNotes v-if="activeTab === 'notes'" />
           <ContactHistory v-if="activeTab === 'history'" />
+          <ContactPhoneChanges
+            v-if="activeTab === 'phoneChanges'"
+            :selected-contact="selectedContact"
+          />
           <ContactMedia v-if="activeTab === 'media'" />
           <ContactMerge
             v-if="activeTab === 'merge'"

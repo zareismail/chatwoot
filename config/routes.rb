@@ -206,6 +206,7 @@ Rails.application.routes.draw do
               post :filter
               post :import
               post :export
+              patch :by_identifier, to: 'contacts/identifiers#update'
             end
             member do
               get :contactable_inboxes

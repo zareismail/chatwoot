@@ -509,6 +509,7 @@
       "TABS": {
         "ATTRIBUTES": "ویژگی ها",
         "HISTORY": "History",
+        "PHONE_CHANGES": "تلفن",
         "NOTES": "یادداشت‌ها",
         "MERGE": "Merge"
       },
@@ -571,6 +572,12 @@
         "NO_NOTES": "No notes, you can add notes from the contact details page.",
         "EMPTY_STATE": "There are no notes associated to this contact. You can add a note by typing in the box above.",
         "CONVERSATION_EMPTY_STATE": "There are no notes yet. Use the Add note button to create one."
+      },
+      "PHONE_CHANGES": {
+        "EMPTY_STATE": "شماره تلفن این مخاطب تغییری نکرده است.",
+        "NONE": "بدون شماره",
+        "CLEARED": "شماره حذف شد",
+        "RELEASED_TO": "به مخاطب {identifier} داده شد"
       }
     },
     "EMPTY_STATE": {
