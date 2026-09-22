@@ -23,7 +23,17 @@ class Api::V1::Widget::BaseController < ApplicationController
   # A contact is limited to a single conversation by the unique index on
   # conversations.contact_id, so an existing one is reused across inboxes.
   def create_conversation
-    @contact.conversations.last || ::Conversation.create!(conversation_params)
+    @contact.conversations.last || begin
+      # The savepoint keeps the failed insert from poisoning an outer transaction:
+      # ConversationsController#create wraps this call in one, and Postgres refuses
+      # every later statement in a transaction that has already hit a violation.
+      ActiveRecord::Base.transaction(requires_new: true) { ::Conversation.create!(conversation_params) }
+    rescue ActiveRecord::RecordNotUnique
+      # A concurrent request created this contact's single conversation between the
+      # check above and the insert. Reuse the one that won rather than failing the
+      # visitor's message.
+      @contact.conversations.reload.last
+    end
   end
 
   def inbox

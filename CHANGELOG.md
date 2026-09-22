@@ -21,6 +21,19 @@ their own APK build.
 
 ---
 
+## 2026-09-22
+
+### Backend — fixed
+
+- **Sending a message no longer fails when two requests race to open the conversation.**
+  A contact is limited to one conversation by a unique index, and two requests arriving
+  together could both find none and both try to create it. The second hit the index and
+  the visitor's message returned a server error. The loser now reuses the conversation
+  the winner created. The insert runs in a savepoint so the failure cannot poison the
+  surrounding transaction when a conversation and its first message are created together.
+
+This is API code, so it takes effect only once the image is deployed.
+
 ## 2026-08-17
 
 ### Widget — fixed
