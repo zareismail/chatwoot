@@ -5,17 +5,12 @@ import {
   getDarkMode,
   getWidgetStyle,
 } from '../sdk/settingsHelper';
-import {
-  computeHashForUserData,
-  getUserCookieName,
-  hasUserKeys,
-} from '../sdk/cookieHelpers';
+import { computeHashForUserData, hasUserKeys } from '../sdk/cookieHelpers';
 import {
   addClasses,
   removeClasses,
   restoreWidgetInDOM,
 } from '../sdk/DOMHelpers';
-import { setCookieWithDomain } from '../sdk/cookieHelpers';
 import { SDK_SET_BUBBLE_VISIBILITY } from 'shared/constants/sharedFrameEvents';
 
 const runSDK = ({ baseUrl, websiteToken }) => {
@@ -120,20 +115,22 @@ const runSDK = ({ baseUrl, websiteToken }) => {
         );
       }
 
-      const userCookieName = getUserCookieName();
-      const existingCookieValue = Cookies.get(userCookieName);
-      const hashToBeStored = computeHashForUserData({ identifier, user });
-      if (hashToBeStored === existingCookieValue) {
+      // Deliberately kept in memory rather than in a cookie. A cookie outlives the
+      // widget session it refers to: once the auth token behind cw_conversation
+      // expires the server mints a fresh anonymous contact, and a guard cookie that
+      // is still valid suppresses the setUser that would have identified it, leaving
+      // the visitor anonymous for as long as the cookie lasts. Within one page load
+      // this only skips a duplicate call — whether the request is needed at all is
+      // decided in the widget, against what Chatwoot actually stores.
+      const userHash = computeHashForUserData({ identifier, user });
+      if (window.$chatwoot.userHash === userHash) {
         return;
       }
 
+      window.$chatwoot.userHash = userHash;
       window.$chatwoot.identifier = identifier;
       window.$chatwoot.user = user;
       IFrameHelper.sendMessage('set-user', { identifier, user });
-
-      setCookieWithDomain(userCookieName, hashToBeStored, {
-        baseDomain,
-      });
     },
 
     setCustomAttributes(customAttributes = {}) {
@@ -198,7 +195,12 @@ const runSDK = ({ baseUrl, websiteToken }) => {
       }
 
       Cookies.remove('cw_conversation');
-      Cookies.remove(getUserCookieName());
+      // The identity has to go with the session. `loaded` replays a stored user into
+      // the freshly reloaded widget, so leaving one here would re-identify the person
+      // who just signed out.
+      window.$chatwoot.userHash = undefined;
+      window.$chatwoot.identifier = undefined;
+      window.$chatwoot.user = undefined;
 
       const iframe = IFrameHelper.getAppFrame();
       iframe.src = IFrameHelper.getUrl({

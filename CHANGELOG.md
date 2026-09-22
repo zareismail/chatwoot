@@ -23,6 +23,43 @@ their own APK build.
 
 ## 2026-09-22
 
+### Widget — fixed
+
+- **A signed-in visitor no longer turns into an anonymous contact.** The SDK kept a
+  `cw_user_<websiteToken>` cookie for a year to remember that `setUser` had already run,
+  and skipped the call whenever that cookie still matched. The session cookie it was
+  guarding, `cw_conversation`, carries a token that expires after 180 days — and the
+  server treats an expired token as no token, quietly creating a fresh anonymous contact.
+  For the 185 days between the two expiries, every returning visitor was given a new
+  nameless contact that `setUser` then refused to identify. They kept chatting, and the
+  agent had no idea who they were. The guard now lives in memory for the page instead, so
+  it cannot outlive the session it describes: a visitor whose contact was re-created
+  server side is identified again on their next page load.
+- **Details changed in the host app now reach Chatwoot.** The fingerprint deciding whether
+  `setUser` had anything new to say covered only avatar, email, name, identifier and
+  identifier hash. Phone number, company, city, country, description and social profiles
+  were sent on every call but left out of it, so changing any of them looked like nothing
+  had changed and Chatwoot kept the old values indefinitely. Custom attributes are
+  unaffected — they have their own endpoint.
+- **A visitor identified before the widget finished loading is no longer skipped.** When a
+  host called `setUser` early, the SDK replayed it once the widget was ready — but passed
+  the bare user object where the widget expected `{ identifier, user }`, so both arrived
+  undefined and the call failed silently. Hosts that identify on `chatwoot:ready` were
+  unaffected; those that identify as soon as they know the user were not.
+- **Signing out no longer leaves the previous visitor's identity behind.** `reset()`
+  cleared the session cookie but kept the user it had been given, which the widget's next
+  load would have replayed.
+
+### Widget — removed
+
+- **The `cw_user_<websiteToken>` cookie is gone.** Nothing reads or writes it any more.
+  Anything outside Chatwoot that inspected it to tell whether a visitor had been
+  identified needs another signal.
+- **The widget session cookie expires after 30 days instead of a year.** It never outlives
+  the token inside it now. A visitor returning after more than 30 days without signing in
+  starts a new session rather than being handed a cookie the server has already stopped
+  honouring.
+
 ### Backend — fixed
 
 - **Sending a message no longer fails when two requests race to open the conversation.**
@@ -32,7 +69,9 @@ their own APK build.
   the winner created. The insert runs in a savepoint so the failure cannot poison the
   surrounding transaction when a conversation and its first message are created together.
 
-This is API code, so it takes effect only once the image is deployed.
+This is widget and API code, so it reaches visitors only once the image is deployed. The
+Android app loads the widget from the deployed host and picks it up with the same deploy;
+no new APK is needed.
 
 ## 2026-08-17
 

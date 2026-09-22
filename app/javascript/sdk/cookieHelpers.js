@@ -3,19 +3,36 @@ import Cookies from 'js-cookie';
 
 const REQUIRED_USER_KEYS = ['avatar_url', 'email', 'name'];
 const ALLOWED_USER_ATTRIBUTES = [...REQUIRED_USER_KEYS, 'identifier_hash'];
+// Every field setUser forwards to Chatwoot has to be in the fingerprint. A field
+// that is sent but not hashed makes setUser look unchanged when it is not, and the
+// new value never reaches the contact — which is how a renamed or renumbered user
+// kept their old details. custom_attributes stay out: they have their own endpoint.
+const CONTACT_INFORMATION_ATTRIBUTES = [
+  'phone_number',
+  'company_name',
+  'city',
+  'country_code',
+  'description',
+  'social_profiles',
+];
 
-export const getUserCookieName = () => {
-  const SET_USER_COOKIE_PREFIX = 'cw_user_';
-  const { websiteToken: websiteIdentifier } = window.$chatwoot;
-  return `${SET_USER_COOKIE_PREFIX}${websiteIdentifier}`;
+const normalizeUserAttribute = value => {
+  if (!value || typeof value !== 'object') return value || '';
+
+  return Object.keys(value)
+    .sort()
+    .map(key => [key, value[key]]);
 };
 
 export const getUserString = ({ identifier = '', user }) => {
-  const userStringWithSortedKeys = ALLOWED_USER_ATTRIBUTES.reduce(
-    (acc, key) => `${acc}${key}${user[key] || ''}`,
-    ''
-  );
-  return `${userStringWithSortedKeys}identifier${identifier}`;
+  const userAttributes = [
+    ...ALLOWED_USER_ATTRIBUTES.map(key => [key, user[key] || '']),
+    ...CONTACT_INFORMATION_ATTRIBUTES.filter(
+      key => user[key] !== undefined
+    ).map(key => [key, normalizeUserAttribute(user[key])]),
+    ['identifier', String(identifier)],
+  ];
+  return JSON.stringify(userAttributes);
 };
 
 export const computeHashForUserData = (...args) => md5(getUserString(...args));

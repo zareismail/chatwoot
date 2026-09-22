@@ -29,7 +29,7 @@ import {
   CHATWOOT_READY,
 } from '../widget/constants/sdkEvents';
 import { SET_USER_ERROR } from '../widget/constants/errorTypes';
-import { getUserCookieName, setCookieWithDomain } from './cookieHelpers';
+import { setCookieWithDomain } from './cookieHelpers';
 import {
   getAlertAudio,
   initOnEvents,
@@ -38,8 +38,15 @@ import { isFlatWidgetStyle } from './settingsHelper';
 import { popoutChatWindow } from '../widget/helpers/popoutHelper';
 import addHours from 'date-fns/addHours';
 
+// Kept well under the 180 day expiry of the JWT this cookie carries. A cookie that
+// outlives its token is worse than no cookie: the browser keeps sending it, the
+// server silently decodes it to {} and mints a brand new anonymous contact, and the
+// visitor loses the thread they were promised continuity on.
+const WIDGET_SESSION_COOKIE_EXPIRY_DAYS = 30;
+
 const updateAuthCookie = (cookieContent, baseDomain = '') =>
   setCookieWithDomain('cw_conversation', cookieContent, {
+    expires: WIDGET_SESSION_COOKIE_EXPIRY_DAYS,
     baseDomain,
   });
 
@@ -181,7 +188,14 @@ export const IFrameHelper = {
       IFrameHelper.toggleCloseButton();
 
       if (window.$chatwoot.user) {
-        IFrameHelper.sendMessage('set-user', window.$chatwoot.user);
+        // sendMessage spreads this object, and the widget's setUser action reads
+        // `identifier` and `user` off it. Passing the bare user object made every
+        // replay arrive with both undefined, so a host that identifies its visitor
+        // before the widget finished loading was never identified at all.
+        IFrameHelper.sendMessage('set-user', {
+          identifier: window.$chatwoot.identifier,
+          user: window.$chatwoot.user,
+        });
       }
 
       window.playAudioAlert = () => {};
@@ -198,7 +212,9 @@ export const IFrameHelper = {
       dispatchWindowEvent({ eventName: CHATWOOT_ERROR, data: data });
 
       if (errorType === SET_USER_ERROR) {
-        Cookies.remove(getUserCookieName());
+        // Drop the in-memory guard so the next setUser call retries instead of
+        // being skipped as a duplicate.
+        window.$chatwoot.userHash = undefined;
       }
     },
     onEvent({ eventIdentifier: eventName, data }) {
