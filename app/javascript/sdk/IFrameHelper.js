@@ -162,7 +162,13 @@ export const IFrameHelper = {
 
   events: {
     loaded: message => {
-      updateAuthCookie(message.config.authToken, window.$chatwoot.baseDomain);
+      // A visitor the host has not identified yet is rendered without a session: there
+      // is no cookie to write, and nothing the widget can usefully do, until `setUser`
+      // mints one.
+      if (message.config.authToken) {
+        updateAuthCookie(message.config.authToken, window.$chatwoot.baseDomain);
+        window.$chatwoot.isIdentified = true;
+      }
       window.$chatwoot.hasLoaded = true;
       const campaignsSnoozedTill = Cookies.get('cw_snooze_campaigns_till');
       IFrameHelper.sendMessage('config-set', {
@@ -226,6 +232,7 @@ export const IFrameHelper = {
 
     setAuthCookie({ data: { widgetAuthToken } }) {
       updateAuthCookie(widgetAuthToken, window.$chatwoot.baseDomain);
+      IFrameHelper.markIdentified();
     },
 
     setCampaignReadOn() {
@@ -318,6 +325,18 @@ export const IFrameHelper = {
     IFrameHelper.sendMessage('push-event', { eventName });
   },
 
+  // The widget stays loaded and invisible until the host identifies the visitor, then
+  // comes forward. Holding the bubble back rather than leaving it clickable and dead is
+  // the difference between a chat that has not started yet and one that is broken.
+  markIdentified: () => {
+    if (window.$chatwoot.isIdentified) return;
+
+    window.$chatwoot.isIdentified = true;
+    if (window.$chatwoot.hideMessageBubble) return;
+
+    removeClasses(bubbleHolder, 'woot-hidden');
+  },
+
   onLoad: ({ widgetColor }) => {
     const iframe = IFrameHelper.getAppFrame();
     iframe.style.visibility = '';
@@ -326,7 +345,9 @@ export const IFrameHelper = {
     if (IFrameHelper.getBubbleHolder().length) {
       return;
     }
-    createBubbleHolder(window.$chatwoot.hideMessageBubble);
+    createBubbleHolder(
+      window.$chatwoot.hideMessageBubble || !window.$chatwoot.isIdentified
+    );
     onLocationChangeListener();
 
     let className = 'woot-widget-bubble';

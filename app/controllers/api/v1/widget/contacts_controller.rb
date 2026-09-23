@@ -1,6 +1,11 @@
 class Api::V1::Widget::ContactsController < Api::V1::Widget::BaseController
   include WidgetHelper
 
+  # `set_user` is the one widget endpoint that has to work without a session: it is what
+  # gives a visitor their contact in the first place. Every other endpoint still requires
+  # one, so an unidentified visitor can do nothing but identify themselves.
+  skip_before_action :set_contact, only: [:set_user]
+  before_action :set_contact_if_identified, only: [:set_user]
   before_action :validate_hmac, only: [:set_user]
 
   def show; end
@@ -12,7 +17,7 @@ class Api::V1::Widget::ContactsController < Api::V1::Widget::BaseController
   def set_user
     contact = nil
 
-    if a_different_contact?
+    if @contact.nil? || a_different_contact?
       @contact_inbox, @widget_auth_token = build_contact_inbox_with_token(@web_widget)
       contact = @contact_inbox.contact
     else
@@ -32,6 +37,12 @@ class Api::V1::Widget::ContactsController < Api::V1::Widget::BaseController
   end
 
   private
+
+  def set_contact_if_identified
+    @contact_inbox = @web_widget.inbox.contact_inboxes.find_by(source_id: auth_token_params[:source_id])
+    @contact = @contact_inbox&.contact
+    Current.contact = @contact
+  end
 
   def identify_contact(contact)
     contact_identify_action = ContactIdentifyAction.new(

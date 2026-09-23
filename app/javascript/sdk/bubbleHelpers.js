@@ -88,6 +88,12 @@ export const onBubbleClick = (props = {}) => {
   if (isOpen === toggleValue) return;
 
   const newIsOpen = toggleValue === undefined ? !isOpen : toggleValue;
+  // Opening waits for the host to identify the visitor. Until `setUser` lands there is
+  // no contact behind the widget, so it would open onto a chat whose every request
+  // fails. Closing is always allowed. Every way in — the bubble, `$chatwoot.toggle`,
+  // a campaign — arrives here, so this is the only place that has to know.
+  if (newIsOpen && !window.$chatwoot.isIdentified) return;
+
   window.$chatwoot.isOpen = newIsOpen;
 
   toggleClass(chatBubble, 'woot--hide');

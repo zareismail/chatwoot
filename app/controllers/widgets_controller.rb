@@ -41,18 +41,25 @@ class WidgetsController < ActionController::Base
   end
 
   def set_contact
-    return if @auth_token_params[:source_id].nil?
-
-    @contact_inbox = ::ContactInbox.find_by(
-      inbox_id: @web_widget.inbox.id,
-      source_id: @auth_token_params[:source_id]
-    )
-
+    source_id = @auth_token_params[:source_id]
+    @contact_inbox = ::ContactInbox.find_by(inbox_id: @web_widget.inbox.id, source_id: source_id) if source_id.present?
     @contact = @contact_inbox&.contact
+
+    # An expired or unknown token resolves to nothing. Handing it back to the widget
+    # would only make every request it signs return a 404, so drop it and let whoever
+    # comes next mint a session that works.
+    @token = nil if @contact_inbox.nil?
   end
 
   def build_contact
     return if @contact.present?
+
+    # An inbox that mandates HMAC cannot hold an unidentified contact, so there is nothing
+    # to create until `setUser` says who the visitor is — creating one here only leaves a
+    # nameless contact behind for every session that starts without a usable cookie. An
+    # inbox that does not mandate it still serves anonymous visitors, who need a contact
+    # up front because nothing else will ever give them one.
+    return if @web_widget.hmac_mandatory?
 
     @contact_inbox, @token = build_contact_inbox_with_token(@web_widget, additional_attributes)
     @contact = @contact_inbox.contact

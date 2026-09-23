@@ -16,6 +16,20 @@ const isMessageInActiveConversation = (getters, message) => {
 const WIDGET_PRESENCE_INTERVAL = 60000;
 
 class ActionCableConnector extends BaseActionCableConnector {
+  // The widget subscribes to the contact inbox it was rendered with, which is nothing at
+  // all until the visitor is identified. Re-subscribing is what carries the live
+  // conversation over to the session `setUser` mints, and over to the surviving contact
+  // when two are merged.
+  static refreshConnector(pubsubToken) {
+    if (!pubsubToken) return;
+
+    window.actionCable?.disconnect();
+    window.actionCable = new ActionCableConnector(
+      window.WOOT_WIDGET,
+      pubsubToken
+    );
+  }
+
   constructor(app, pubsubToken) {
     super(app, pubsubToken, '', WIDGET_PRESENCE_INTERVAL);
     this.events = {

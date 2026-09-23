@@ -21,6 +21,62 @@ their own APK build.
 
 ---
 
+## 2026-09-23
+
+### Widget — changed
+
+- **The chat holds back until the host says who the visitor is.** On an inbox that
+  mandates HMAC the widget is now rendered without a contact, so opening it would show a
+  chat that cannot load history and fails on send. It still loads in the background on
+  every page, but it will not open — the bubble stays hidden and `$chatwoot.toggle()`
+  does nothing — until `setUser` hands it a session, at which point it comes forward on
+  its own. A visitor whose cookie is still valid is identified from the moment the page
+  loads and sees no difference at all. An inbox that does not mandate HMAC always has a
+  session at load, so nothing changes there either.
+
+  `window.$chatwoot.isIdentified` reports that state, for a host that draws its own
+  launcher and wants to hold it back too. When `setUser` fails — a wrong identifier hash,
+  say — the chat stays shut and the only sign of it is the `chatwoot:error` event.
+
+### Widget — fixed
+
+- **Messages keep arriving live after a visitor is identified.** The widget subscribes to
+  its contact's room once, when the page loads. `setUser` can move the visitor to a
+  different contact inbox — and now routinely does, because the page is rendered before
+  anyone is identified — which left the widget listening to a room nothing was published
+  to, so replies only showed up after a reload. It now re-subscribes to the room the new
+  session belongs to. Merging two contacts was meant to do the same thing and called a
+  function that did not exist, throwing instead; it goes through the same path now.
+
+### Backend — changed
+
+- **An inbox that mandates HMAC no longer creates a contact just because the chat was
+  opened.** The widget page minted one for every visitor it rendered for, before anyone
+  had said who they were or typed anything — so an expired session or a cleared cookie
+  left a nameless contact behind, and they were accumulating at up to twenty a day. On an
+  inbox with **Enforce user identity validation** turned on, the contact is now created by
+  `setUser` and nothing else. Since that setting also rejects an identifier without a
+  valid hash, no contact on such an inbox can come into existence unidentified.
+
+  An inbox without that setting is unchanged: anonymous visitors are legitimate there and
+  nothing else would ever give them a contact, so they still get one at page load. The two
+  behaviours are deliberately tied to the same switch — turning identity validation off
+  turns anonymous contacts back on.
+
+  `setUser` no longer needs a session to run, since it is what hands one out. Every other
+  widget endpoint still requires one, so on an inbox that mandates HMAC a visitor the host
+  never identifies has a widget that shows the channel's welcome copy and can do nothing
+  else. Sending from it fails, visibly, as a message that would not send. Until the widget
+  explains why, that is all the feedback there is.
+
+  The Android app is unaffected. It bootstraps through `POST /api/v1/widget/config`, which
+  still creates the contact up front so installed builds keep working, and identifies it
+  immediately afterwards.
+
+This is widget, SDK and API code, so it reaches visitors only once the image is
+deployed. The Android app talks to the API directly and is not affected by the widget
+holding back; it picks up the API side with the same deploy and needs no new APK.
+
 ## 2026-09-22
 
 ### Widget — fixed

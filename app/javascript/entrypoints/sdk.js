@@ -54,6 +54,9 @@ const runSDK = ({ baseUrl, websiteToken }) => {
     baseUrl,
     baseDomain,
     hasLoaded: false,
+    // The host has not identified anyone yet. Set once the widget reports a session,
+    // either one it was rendered with or one `setUser` just minted.
+    isIdentified: false,
     hideMessageBubble: chatwootSettings.hideMessageBubble || false,
     isOpen: false,
     position: chatwootSettings.position === 'left' ? 'left' : 'right',
@@ -195,6 +198,7 @@ const runSDK = ({ baseUrl, websiteToken }) => {
       }
 
       Cookies.remove('cw_conversation');
+      window.$chatwoot.isIdentified = false;
       // The identity has to go with the session. `loaded` replays a stored user into
       // the freshly reloaded widget, so leaving one here would re-identify the person
       // who just signed out.

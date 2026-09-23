@@ -1,4 +1,5 @@
 import { sendMessage } from 'widget/helpers/utils';
+import ActionCableConnector from 'widget/helpers/actionCable';
 import ContactsAPI from '../../api/contacts';
 import { SET_USER_ERROR } from '../../constants/errorTypes';
 import { setHeader } from '../../helpers/axios';
@@ -73,9 +74,15 @@ export const actions = {
         custom_attributes,
       };
       const {
-        data: { widget_auth_token: widgetAuthToken },
+        data: { widget_auth_token: widgetAuthToken, pubsub_token: pubsubToken },
       } = await ContactsAPI.setUser(identifier, user);
       updateWidgetAuthToken(widgetAuthToken);
+      if (widgetAuthToken) {
+        // A new token means a new contact inbox, and the room the widget has been
+        // listening on since it loaded belongs to the old one — or to no one, when the
+        // page was rendered for a visitor who had not identified themselves yet.
+        ActionCableConnector.refreshConnector(pubsubToken);
+      }
       dispatch('get');
       if (identifierHash || widgetAuthToken) {
         dispatch('conversation/clearConversations', {}, { root: true });
