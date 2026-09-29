@@ -45,7 +45,7 @@ const isReel = computed(() => {
         :src="attachment.dataUrl"
         :class="{
           'max-w-48': isReel,
-          'max-w-full': !isReel,
+          'max-w-[15.625rem]': !isReel,
         }"
         @click.stop
         @error="handleError"

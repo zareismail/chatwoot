@@ -177,7 +177,10 @@
 
   word-break: break-word;
 
-  :not([audio]) {
+  // Stops arbitrary content overflowing the bubble. Video is exempt: it carries its own,
+  // narrower cap, and this selector out-weighs a utility class, so it was widening every
+  // clip back to the full width of the bubble.
+  :not([audio]):not(video) {
     max-width: 100%;
   }
 

@@ -23,6 +23,14 @@ their own APK build.
 
 ## 2026-09-29
 
+### Widget — fixed
+
+- **A video no longer spreads across the whole conversation.** Videos were meant to be
+  capped at 250 pixels wide, but the chat bubble sets `max-width: 100%` on everything it
+  holds, and that rule overrode the cap, so a clip filled the full width of the bubble.
+  Videos are now held at 250 pixels wide, the same as photos, and the height scales down
+  with the width.
+
 ### Dashboard — added
 
 - **An "Orphan contacts" view under Contacts.** The contacts list only shows contacts that
@@ -30,6 +38,14 @@ their own APK build.
   invisible and could not be reviewed or removed. They now have their own sidebar entry,
   listed with the usual sorting, paging, editing and deleting. The normal list and its
   filters are unchanged.
+
+### Dashboard — fixed
+
+- **Photos and videos in a conversation are no longer drawn at full bubble width.** They
+  filled the whole bubble, so a portrait clip from a phone ran to nearly the full height of
+  the screen. They are now capped at 250 pixels wide to match the widget, and the height
+  follows the width. Instagram reels keep their narrower size, and the gallery still opens
+  them at full size.
 
 ## 2026-09-23
 
