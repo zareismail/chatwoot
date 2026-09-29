@@ -299,6 +299,7 @@
       "TITLE": "Contacts",
       "SEARCH_TITLE": "Search contacts",
       "ACTIVE_TITLE": "Active contacts",
+      "ORPHAN_TITLE": "Orphan contacts",
       "SEARCH_PLACEHOLDER": "Search...",
       "MESSAGE_BUTTON": "Message",
       "SEND_MESSAGE": "Send message",
@@ -594,7 +595,8 @@
       "BUTTON_LABEL": "Add contact",
       "SEARCH_EMPTY_STATE_TITLE": "No contacts matches your search 🔍",
       "LIST_EMPTY_STATE_TITLE": "No contacts available in this view 📋",
-      "ACTIVE_EMPTY_STATE_TITLE": "No contacts are active at the moment 🌙"
+      "ACTIVE_EMPTY_STATE_TITLE": "No contacts are active at the moment 🌙",
+      "ORPHAN_EMPTY_STATE_TITLE": "No orphan contacts. Every contact has an identifier, email or phone number."
     },
     "LOAD_MORE": "Load more"
   },

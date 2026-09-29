@@ -103,6 +103,21 @@ export const actions = {
     }
   },
 
+  orphans: async ({ commit }, { page = 1, sortAttr } = {}) => {
+    commit(types.SET_CONTACT_UI_FLAG, { isFetching: true });
+    try {
+      const {
+        data: { payload, meta },
+      } = await ContactAPI.orphans(page, sortAttr);
+      commit(types.CLEAR_CONTACTS);
+      commit(types.SET_CONTACTS, payload);
+      commit(types.SET_CONTACT_META, meta);
+      commit(types.SET_CONTACT_UI_FLAG, { isFetching: false });
+    } catch (error) {
+      commit(types.SET_CONTACT_UI_FLAG, { isFetching: false });
+    }
+  },
+
   show: async ({ commit }, { id }) => {
     commit(types.SET_CONTACT_UI_FLAG, { isFetchingItem: true });
     try {

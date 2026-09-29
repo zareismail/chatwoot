@@ -296,6 +296,7 @@
       "TITLE": "مخاطبین",
       "SEARCH_TITLE": "جستجوی مخاطبین",
       "ACTIVE_TITLE": "Active contacts",
+      "ORPHAN_TITLE": "مخاطبان ناشناس",
       "SEARCH_PLACEHOLDER": "جستجو...",
       "MESSAGE_BUTTON": "پیام",
       "SEND_MESSAGE": "ارسال پیام",
@@ -591,7 +592,8 @@
       "BUTTON_LABEL": "Add contact",
       "SEARCH_EMPTY_STATE_TITLE": "هیچ مخاطبی با جستجوی شما مطابقت ندارد 🔍",
       "LIST_EMPTY_STATE_TITLE": "No contacts available in this view 📋",
-      "ACTIVE_EMPTY_STATE_TITLE": "No contacts are active at the moment 🌙"
+      "ACTIVE_EMPTY_STATE_TITLE": "No contacts are active at the moment 🌙",
+      "ORPHAN_EMPTY_STATE_TITLE": "مخاطب ناشناسی وجود ندارد. همه مخاطبان شناسه، ایمیل یا شماره تلفن دارند."
     },
     "LOAD_MORE": "Load more"
   },

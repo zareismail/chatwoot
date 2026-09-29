@@ -21,6 +21,16 @@ their own APK build.
 
 ---
 
+## 2026-09-29
+
+### Dashboard — added
+
+- **An "Orphan contacts" view under Contacts.** The contacts list only shows contacts that
+  have an identifier, an email or a phone number, so contacts with none of the three were
+  invisible and could not be reviewed or removed. They now have their own sidebar entry,
+  listed with the usual sorting, paging, editing and deleting. The normal list and its
+  filters are unchanged.
+
 ## 2026-09-23
 
 ### Widget — changed

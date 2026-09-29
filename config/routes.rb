@@ -248,6 +248,7 @@ Rails.application.routes.draw do
           resources :contacts, only: [:index, :show, :update, :create, :destroy] do
             collection do
               get :active
+              get :orphans
               get :search
               post :filter
               post :import

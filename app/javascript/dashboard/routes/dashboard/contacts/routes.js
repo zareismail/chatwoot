@@ -38,6 +38,12 @@ export const routes = [
         component: ContactsIndex,
         meta: commonMeta,
       },
+      {
+        path: 'orphans',
+        name: 'contacts_dashboard_orphans',
+        component: ContactsIndex,
+        meta: commonMeta,
+      },
     ],
   },
   {

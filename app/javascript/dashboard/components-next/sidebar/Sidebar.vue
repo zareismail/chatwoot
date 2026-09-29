@@ -637,6 +637,12 @@ const menuItems = computed(() => {
           activeOn: ['contacts_dashboard_active'],
         },
         {
+          name: 'Orphans',
+          label: t('SIDEBAR.ORPHAN_CONTACTS'),
+          to: accountScopedRoute('contacts_dashboard_orphans'),
+          activeOn: ['contacts_dashboard_orphans'],
+        },
+        {
           name: 'Segments',
           icon: 'i-lucide-group',
           label: t('SIDEBAR.CUSTOM_VIEWS_SEGMENTS'),

@@ -101,6 +101,9 @@ const isContactIndexView = computed(
   () => route.name === 'contacts_dashboard_index' && pageNumber.value === 1
 );
 const isActiveView = computed(() => route.name === 'contacts_dashboard_active');
+const isOrphanView = computed(
+  () => route.name === 'contacts_dashboard_orphans'
+);
 const hasAppliedFilters = computed(() => {
   return appliedFilters.value.length > 0;
 });
@@ -125,6 +128,7 @@ const showEmptyText = computed(() => {
 const headerTitle = computed(() => {
   if (searchQuery.value) return t('CONTACTS_LAYOUT.HEADER.SEARCH_TITLE');
   if (isActiveView.value) return t('CONTACTS_LAYOUT.HEADER.ACTIVE_TITLE');
+  if (isOrphanView.value) return t('CONTACTS_LAYOUT.HEADER.ORPHAN_TITLE');
   if (activeSegmentId.value) return activeSegment.value?.name;
   if (activeLabel.value) return `#${activeLabel.value}`;
   return t('CONTACTS_LAYOUT.HEADER.TITLE');
@@ -133,6 +137,8 @@ const headerTitle = computed(() => {
 const emptyStateMessage = computed(() => {
   if (isActiveView.value)
     return t('CONTACTS_LAYOUT.EMPTY_STATE.ACTIVE_EMPTY_STATE_TITLE');
+  if (isOrphanView.value)
+    return t('CONTACTS_LAYOUT.EMPTY_STATE.ORPHAN_EMPTY_STATE_TITLE');
   if (!searchQuery.value || hasAppliedFilters.value)
     return t('CONTACTS_LAYOUT.EMPTY_STATE.LIST_EMPTY_STATE_TITLE');
   return t('CONTACTS_LAYOUT.EMPTY_STATE.SEARCH_EMPTY_STATE_TITLE');
@@ -240,6 +246,20 @@ const fetchActiveContacts = async (page = 1, options = {}) => {
   updatePageParam(page);
 };
 
+const fetchOrphanContacts = async (page = 1, options = {}) => {
+  const { clearSelection: shouldClearSelection = true } = options;
+  if (shouldClearSelection) {
+    clearSelection();
+  }
+
+  await store.dispatch('contacts/clearContactFilters');
+  await store.dispatch('contacts/orphans', {
+    page,
+    sortAttr: buildSortAttr(),
+  });
+  updatePageParam(page);
+};
+
 const searchContacts = debounce(
   async (value, page = 1, append = false, options = {}) => {
     const { clearSelection: shouldClearSelection = true } = options;
@@ -305,6 +325,13 @@ const fetchContactsBasedOnContext = async (page, options = {}) => {
   // If we're on the active route, fetch active contacts
   if (isActiveView.value) {
     await fetchActiveContacts(page, {
+      clearSelection: shouldClearSelection,
+    });
+    return;
+  }
+  // If we're on the orphans route, fetch orphan contacts
+  if (isOrphanView.value) {
+    await fetchOrphanContacts(page, {
       clearSelection: shouldClearSelection,
     });
     return;
@@ -416,6 +443,11 @@ const handleSort = async ({ sort, order }) => {
     return;
   }
 
+  if (isOrphanView.value) {
+    await fetchOrphanContacts();
+    return;
+  }
+
   await (activeSegmentId.value || hasAppliedFilters.value
     ? fetchSavedOrAppliedFilteredContact(
         activeSegmentId.value
@@ -448,7 +480,7 @@ watch(
 );
 
 watch(
-  [activeLabel, activeSegment, isActiveView],
+  [activeLabel, activeSegment, isActiveView, isOrphanView],
   () => {
     fetchContactsBasedOnContext(pageNumber.value);
   },
@@ -462,6 +494,7 @@ watch(searchQuery, value => {
   if (value === undefined) {
     if (
       isActiveView.value ||
+      isOrphanView.value ||
       activeLabel.value ||
       activeSegment.value ||
       hasAppliedFilters.value
@@ -481,6 +514,10 @@ onMounted(async () => {
     }
     if (isActiveView.value) {
       await fetchActiveContacts(pageNumber.value);
+      return;
+    }
+    if (isOrphanView.value) {
+      await fetchOrphanContacts(pageNumber.value);
       return;
     }
     await fetchContacts(pageNumber.value);

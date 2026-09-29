@@ -74,6 +74,12 @@ class ContactAPI extends ApiClient {
     });
   }
 
+  orphans(page = 1, sortAttr = 'name') {
+    return axios.get(`${this.url}/orphans`, {
+      params: buildContactParams(page, sortAttr),
+    });
+  }
+
   // eslint-disable-next-line default-param-last
   filter(page = 1, sortAttr = 'name', queryPayload, options = {}) {
     return axios.post(`${this.url}/filter`, queryPayload, {

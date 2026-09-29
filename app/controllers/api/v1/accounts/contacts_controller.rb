@@ -12,9 +12,9 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController
   RESULTS_PER_PAGE = 15
 
   before_action :check_authorization
-  before_action :set_current_page, only: [:index, :active, :search, :filter]
+  before_action :set_current_page, only: [:index, :active, :orphans, :search, :filter]
   before_action :fetch_contact, only: [:show, :update, :destroy, :avatar, :contactable_inboxes, :destroy_custom_attributes]
-  before_action :set_include_contact_inboxes, only: [:index, :active, :search, :filter, :show, :update]
+  before_action :set_include_contact_inboxes, only: [:index, :active, :orphans, :search, :filter, :show, :update]
 
   def index
     @contacts = fetch_contacts(resolved_contacts)
@@ -53,6 +53,12 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController
   def active
     contacts = Current.account.contacts.where(id: ::OnlineStatusTracker
                   .get_available_contact_ids(Current.account.id))
+    @contacts = fetch_contacts(contacts)
+    @contacts_count = @contacts.total_count
+  end
+
+  def orphans
+    contacts = Current.account.contacts.orphaned
     @contacts = fetch_contacts(contacts)
     @contacts_count = @contacts.total_count
   end

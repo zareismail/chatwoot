@@ -177,6 +177,10 @@ class Contact < ApplicationRecord
     where("contacts.email <> '' OR contacts.phone_number <> '' OR contacts.identifier <> ''")
   end
 
+  scope :orphaned, lambda {
+    where("COALESCE(contacts.identifier, '') = '' AND COALESCE(contacts.email, '') = '' AND COALESCE(contacts.phone_number, '') = ''")
+  }
+
   def discard_invalid_attrs
     phone_number_format
     email_format
