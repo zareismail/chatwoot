@@ -19,6 +19,7 @@ const emit = defineEmits([
   'pause',
   'play',
   'recordError',
+  'microphoneError',
 ]);
 
 const waveformContainer = ref(null);
@@ -125,9 +126,16 @@ const stopRecording = () => {
   }
 };
 
-const startRecording = () => {
-  record.value.startRecording();
+// Rejects when the page has no microphone: access denied, no device, or an insecure
+// origin (plain http on anything but localhost), where navigator.mediaDevices is undefined.
+const startRecording = async () => {
   isRecording.value = true;
+  try {
+    await record.value.startRecording();
+  } catch (error) {
+    isRecording.value = false;
+    emit('microphoneError', { error });
+  }
 };
 
 const playPause = () => {

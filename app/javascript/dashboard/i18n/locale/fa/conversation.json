@@ -290,6 +290,7 @@
       "TIP_AUDIORECORDER_PERMISSION": "اجازه دسترسی به صدا",
       "TIP_AUDIORECORDER_ERROR": "صدا را نمی‌توان باز کند",
       "AUDIO_CONVERSION_FAILED": "Audio conversion failed. Please try again.",
+      "MICROPHONE_UNAVAILABLE": "دسترسی به میکروفون ممکن نشد. اجازه دسترسی به میکروفون را برای این سایت بدهید و دوباره تلاش کنید.",
       "DRAG_DROP": "برای ضمیمه کردن درگ و درآپ کنید",
       "IMAGE_UPLOAD_SUCCESS": "تصویر با موفقیت آپلود شد",
       "START_AUDIO_RECORDING": "در حال شروع ضبط صدا",

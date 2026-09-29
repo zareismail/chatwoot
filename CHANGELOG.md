@@ -41,6 +41,12 @@ their own APK build.
 
 ### Dashboard — fixed
 
+- **The voice recorder no longer gets stuck when the microphone is unavailable.** If the
+  browser refused the microphone, the reply box swapped to an empty recorder and stayed
+  there with no explanation. It now closes the recorder and says the microphone could not
+  be accessed. The microphone only works over `https` or on `localhost`; opening a local
+  build at another address, such as `http://0.0.0.0:3000`, is one way to hit this.
+
 - **Photos and videos in a conversation are no longer drawn at full bubble width.** They
   filled the whole bubble, so a portrait clip from a phone ran to nearly the full height of
   the screen. They are now capped at 250 pixels wide to match the widget, and the height
