@@ -36,7 +36,6 @@ import {
 } from 'shared/helpers/AudioNotificationHelper';
 import { isFlatWidgetStyle } from './settingsHelper';
 import { popoutChatWindow } from '../widget/helpers/popoutHelper';
-import addHours from 'date-fns/addHours';
 
 // Kept well under the 180 day expiry of the JWT this cookie carries. A cookie that
 // outlives its token is worse than no cookie: the browser keeps sending it, the
@@ -51,7 +50,7 @@ const updateAuthCookie = (cookieContent, baseDomain = '') =>
   });
 
 const updateCampaignReadStatus = baseDomain => {
-  const expireBy = addHours(new Date(), 1);
+  const expireBy = new Date(Date.now() + 60 * 60 * 1000);
   setCookieWithDomain('cw_snooze_campaigns_till', Number(expireBy), {
     expires: expireBy,
     baseDomain,

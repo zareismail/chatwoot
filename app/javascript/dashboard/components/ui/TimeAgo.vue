@@ -3,11 +3,8 @@ const MINUTE_IN_MILLI_SECONDS = 60000;
 const HOUR_IN_MILLI_SECONDS = MINUTE_IN_MILLI_SECONDS * 60;
 const DAY_IN_MILLI_SECONDS = HOUR_IN_MILLI_SECONDS * 24;
 
-import {
-  dynamicTime,
-  dateFormat,
-  shortTimestamp,
-} from 'shared/helpers/timeHelper';
+import { dynamicTime, shortTimestamp } from 'shared/helpers/timeHelper';
+import { useExactTimestamp } from 'shared/composables/useExactTimestamp';
 
 export default {
   name: 'TimeAgo',
@@ -36,6 +33,9 @@ export default {
       type: [String, Date, Number],
       default: 0,
     },
+  },
+  setup() {
+    return { exactTimestamp: useExactTimestamp() };
   },
   data() {
     return {
@@ -66,47 +66,38 @@ export default {
       return shortTimestamp(this.agentLastSeenTimeAgo);
     },
     createdAt() {
-      const createdTimeDiff = Date.now() - this.createdAtTimestamp * 1000;
-      const isBeforeAMonth = createdTimeDiff > DAY_IN_MILLI_SECONDS * 30;
-      return !isBeforeAMonth
-        ? `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.CREATED.LATEST')} ${
-            this.createdAtTimeAgo
-          }`
-        : `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.CREATED.OLDEST')} ${dateFormat(
-            this.createdAtTimestamp
-          )}`;
+      return `${this.$t(
+        'CHAT_LIST.CHAT_TIME_STAMP.CREATED.OLDEST'
+      )} ${this.exactTimestamp(this.createdAtTimestamp)}`;
     },
     lastActivity() {
-      const lastActivityTimeDiff =
-        Date.now() - this.lastActivityTimestamp * 1000;
-      const isNotActive = lastActivityTimeDiff > DAY_IN_MILLI_SECONDS * 30;
-      return !isNotActive
-        ? `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_ACTIVITY.ACTIVE')} ${
-            this.lastActivityAtTimeAgo
-          }`
-        : `${this.$t(
-            'CHAT_LIST.CHAT_TIME_STAMP.LAST_ACTIVITY.NOT_ACTIVE'
-          )} ${dateFormat(this.lastActivityTimestamp)}`;
+      return `${this.$t(
+        'CHAT_LIST.CHAT_TIME_STAMP.LAST_ACTIVITY.NOT_ACTIVE'
+      )} ${this.exactTimestamp(this.lastActivityTimestamp)}`;
     },
     tooltipText() {
-      let lines = [this.createdAt, this.lastActivity];
+      const lines = [this.createdAt, this.lastActivity];
       if (this.contactLastSeenAt) {
         const contactDiff = Date.now() - this.contactLastSeenAt * 1000;
-        const contactLabel =
+        const contactTime =
           contactDiff > DAY_IN_MILLI_SECONDS * 30
-            ? `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_SEEN.CONTACT')} ${dateFormat(this.contactLastSeenAt)}`
-            : `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_SEEN.CONTACT')} ${this.contactLastSeenTimeAgo}`;
-        lines.push(contactLabel);
+            ? this.exactTimestamp(this.contactLastSeenAt)
+            : this.contactLastSeenTimeAgo;
+        lines.push(
+          `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_SEEN.CONTACT')} ${contactTime}`
+        );
       }
       if (this.agentLastSeenAt) {
         const agentDiff = Date.now() - this.agentLastSeenAt * 1000;
-        const agentLabel =
+        const agentTime =
           agentDiff > DAY_IN_MILLI_SECONDS * 30
-            ? `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_SEEN.AGENT')} ${dateFormat(this.agentLastSeenAt)}`
-            : `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_SEEN.AGENT')} ${this.agentLastSeenTimeAgo}`;
-        lines.push(agentLabel);
+            ? this.exactTimestamp(this.agentLastSeenAt)
+            : this.agentLastSeenTimeAgo;
+        lines.push(
+          `${this.$t('CHAT_LIST.CHAT_TIME_STAMP.LAST_SEEN.AGENT')} ${agentTime}`
+        );
       }
-      return lines.join('<br>');
+      return lines.join('\n');
     },
   },
   watch: {
@@ -167,16 +158,13 @@ export default {
   <div
     v-tooltip.top="{
       content: tooltipText,
+      popperClass: 'whitespace-pre-line',
       delay: { show: 1000, hide: 0 },
-      html: true,
     }"
     class="ml-auto leading-4 text-xxs text-n-slate-10 hover:text-n-slate-11"
   >
     <span>{{ `${createdAtTime} • ${lastActivityTime}` }}</span>
-    <span
-      v-if="contactLastSeenDisplay"
-      class="block text-n-slate-9"
-    >
+    <span v-if="contactLastSeenDisplay" class="block text-n-slate-9">
       {{ contactLastSeenDisplay }}
       <span v-if="agentLastSeenDisplay" class="text-n-slate-8">
         · {{ agentLastSeenDisplay }}

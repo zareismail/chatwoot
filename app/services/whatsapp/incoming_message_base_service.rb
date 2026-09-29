@@ -4,21 +4,23 @@
 class Whatsapp::IncomingMessageBaseService
   include ::Whatsapp::IncomingMessageServiceHelpers
   include ::Whatsapp::IncomingMessageIdentifierHelper
+  include ::Whatsapp::IncomingContactMessageHandler
 
-  pattr_initialize [:inbox!, :params!, :outgoing_echo]
+  pattr_initialize [:inbox!, :params!, :outgoing_echo, { locked_sender_id: nil }]
 
   def perform
     processed_params
 
-    if processed_params.try(:[], :statuses).present?
-      process_statuses
-    elsif messages_data.present?
-      process_messages
-    end
+    return process_statuses if processed_params.try(:[], :statuses).present?
+
+    process_identity_change_messages
+    return process_messages if messages_data.present?
   end
 
   # Returns messages array for both regular messages and echo events
   def messages_data
+    return @messages_data if defined?(@messages_data)
+
     @processed_params&.dig(:messages) || @processed_params&.dig(:message_echoes)
   end
 
@@ -57,12 +59,12 @@ class Whatsapp::IncomingMessageBaseService
   end
 
   def update_message_with_status(message, status)
-    message.status = status[:status]
-    if status[:status] == 'failed' && status[:errors].present?
-      error = status[:errors]&.first
-      message.external_error = "#{error[:code]}: #{error[:title]}"
-    end
-    message.save!
+    external_error = if status[:status] == 'failed' && status[:errors].present?
+                       error = status[:errors]&.first
+                       "#{error[:code]}: #{error[:title]}"
+                     end
+
+    Messages::StatusUpdateService.new(message, status[:status], external_error).perform
   end
 
   def create_messages
@@ -86,15 +88,6 @@ class Whatsapp::IncomingMessageBaseService
     @message.content = I18n.t('conversations.messages.whatsapp.unsupported_message')
     @message.content_attributes = @message.content_attributes.merge(is_unsupported: true)
     @message.save!
-  end
-
-  def create_contact_messages(message)
-    message['contacts'].each do |contact|
-      # Pass source_id from parent message since contact objects don't have :id
-      create_message(contact, source_id: message[:id], content_attributes_source: message)
-      attach_contact(contact)
-      @message.save!
-    end
   end
 
   def create_regular_message(message)
@@ -169,30 +162,21 @@ class Whatsapp::IncomingMessageBaseService
 
   def message_content_attributes(message)
     content_attrs = outgoing_echo ? { external_echo: true } : {}
+    content_attrs[:in_reply_to] = @in_reply_to_message_id if @in_reply_to_message_id.present?
     content_attrs[:in_reply_to_external_id] = @in_reply_to_external_id if @in_reply_to_external_id.present?
     referral_content_attrs = referral_attributes(message)
     content_attrs[:referral] = referral_content_attrs if referral_content_attrs.present?
-    content_attrs
-  end
 
-  def attach_contact(contact)
-    phones = contact[:phones]
-    phones = [{ phone: 'Phone number is not available' }] if phones.blank?
-
-    name_info = contact['name'] || {}
-    contact_meta = {
-      firstName: name_info['first_name'],
-      lastName: name_info['last_name']
-    }.compact
-
-    phones.each do |phone|
-      @message.attachments.new(
-        account_id: @message.account_id,
-        file_type: file_content_type(message_type),
-        fallback_title: phone[:phone].to_s,
-        meta: contact_meta
-      )
+    flow_response = message.dig(:interactive, :nfm_reply)
+    if flow_response.present?
+      content_attrs[:whatsapp_flow_response] = {
+        name: flow_response[:name],
+        body: flow_response[:body],
+        response_json: parse_flow_response_json(flow_response[:response_json])
+      }.compact
     end
+
+    content_attrs
   end
 
   def update_contact_with_profile_name(contact_params)
@@ -200,18 +184,21 @@ class Whatsapp::IncomingMessageBaseService
     return if profile_name.blank?
     return if @contact.name == profile_name
 
-    # Only update if current name exactly matches the phone number or formatted phone number
+    # Only update if current name exactly matches a phone number candidate
     return unless contact_name_matches_phone_number?
 
     @contact.update!(name: profile_name)
   end
 
   def contact_name_matches_phone_number?
-    message_phone_number = whatsapp_phone_number(messages_data.first[:from])
-    return false if message_phone_number.blank?
+    return false if (message_phone_number = whatsapp_phone_number(messages_data.first[:from])).blank?
 
-    phone_number = "+#{message_phone_number}"
-    formatted_phone_number = TelephoneNumber.parse(phone_number).international_number
-    @contact.name == phone_number || @contact.name == formatted_phone_number
+    phone_number_candidates(message_phone_number).any? do |number|
+      phone_number = "+#{number}"
+      formatted_phone_number = TelephoneNumber.parse(phone_number).international_number
+      @contact.name == phone_number || @contact.name == formatted_phone_number
+    end
   end
 end
+
+Whatsapp::IncomingMessageBaseService.prepend_mod_with('Whatsapp::IncomingMessageBaseService')
