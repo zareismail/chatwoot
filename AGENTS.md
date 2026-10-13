@@ -93,7 +93,8 @@ Path aliases (defined once in `vite.shared.ts`, shared by `vite.config.ts` and `
 
 ## Deployment (ragham)
 
-- `bash deploy/docker.sh` builds `docker/Dockerfile` and pushes to `registry.hamdocker.ir/raghamapp/chatwoot` with a date tag (`YYYY-MM-DD_HH-MM`). It refuses to run with a dirty working tree.
+- `bash deploy/release.sh` builds `docker/Dockerfile` and pushes to `registry.hamdocker.ir/raghamapp/chatwoot` with a date tag (`YYYY-MM-DD_HH-MM`). It refuses to run with a dirty working tree.
+- The script uses Docker when it is installed and Podman otherwise (printed as `Engine:`). With Podman it builds with `--format docker`, so the pushed image has the Docker manifest the platform expects; run `podman login registry.hamdocker.ir` once first.
 - The `app` and `sidekiq` pods share the same image — bump the tag in both, restart, then run migrations if the release includes any.
 
 ## Code Style

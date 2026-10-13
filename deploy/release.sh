@@ -5,11 +5,12 @@ set -Eeuo pipefail
 # ============================================================
 # Chatwoot Release Script
 #
-# Builds the production Docker image and pushes it to
-# Hamravesh Docker Registry.
+# Builds the production image and pushes it to Hamravesh Docker
+# Registry, with Docker when it is installed and Podman otherwise.
+# With Podman, log in once first: podman login registry.hamdocker.ir
 #
 # Usage:
-#   ./deploy/build.sh
+#   bash deploy/release.sh
 # ============================================================
 
 REGISTRY="registry.hamdocker.ir"
@@ -19,9 +20,24 @@ IMAGE="chatwoot"
 TAG=$(date +"%Y-%m-%d_%H-%M")
 FULL_IMAGE="${REGISTRY}/${PROJECT}/${IMAGE}:${TAG}"
 
+# Podman writes OCI manifests by default; `--format docker` makes it produce
+# the same Docker manifest a Docker build would, so the platform pulls an image
+# identical in kind whichever engine built it.
+if command -v docker >/dev/null 2>&1; then
+    ENGINE="docker"
+    BUILD_FLAGS=()
+elif command -v podman >/dev/null 2>&1; then
+    ENGINE="podman"
+    BUILD_FLAGS=(--format docker)
+else
+    echo "ERROR: Neither docker nor podman is installed."
+    exit 1
+fi
+
 echo "=================================================="
 echo " Chatwoot Release"
 echo "=================================================="
+echo "Engine: ${ENGINE}"
 echo "Image : ${FULL_IMAGE}"
 echo "Branch: $(git branch --show-current)"
 echo "Commit: $(git rev-parse --short HEAD)"
@@ -40,10 +56,11 @@ fi
 # ------------------------------------------------------------
 # Build
 # ------------------------------------------------------------
-echo "Building Docker image..."
+echo "Building image..."
 echo
 
-docker build \
+"${ENGINE}" build \
+    "${BUILD_FLAGS[@]}" \
     -t "${FULL_IMAGE}" \
     -f docker/Dockerfile \
     .
@@ -58,7 +75,7 @@ echo
 echo "Pushing image to registry..."
 echo
 
-docker push "${FULL_IMAGE}"
+"${ENGINE}" push "${FULL_IMAGE}"
 
 echo
 echo "=================================================="

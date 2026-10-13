@@ -12,7 +12,7 @@ users — including the Android app, which loads the widget from the deployed ho
 it ships:
 
 ```bash
-bash deploy/docker.sh
+bash deploy/release.sh
 ```
 
 Then bump the tag on both the `app` and `sidekiq` pods, restart them, and run migrations
