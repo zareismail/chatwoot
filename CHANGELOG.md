@@ -21,6 +21,21 @@ their own APK build.
 
 ---
 
+## 2026-10-12
+
+### Dashboard — added
+
+- **Hovering a conversation previews its latest messages.** Resting the pointer on a
+  conversation in the list for a moment shows a card beside the list with the contact,
+  the inbox and its latest messages as chat bubbles — images as thumbnails, private
+  notes included and marked — so an agent can check what a chat is about without
+  opening it. The pointer can move onto the card to scroll through those messages, and
+  clicking it opens the conversation. Previewing does not mark the conversation as
+  read: its unread count stays until it is actually opened. The preview is not shown
+  for the conversation that is already open, or on touch screens.
+
+---
+
 ## 2026-09-29
 
 ### Widget — fixed

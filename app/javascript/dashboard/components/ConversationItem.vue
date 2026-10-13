@@ -1,10 +1,11 @@
 <script setup>
-import { computed, ref, watch, inject } from 'vue';
+import { computed, onUnmounted, ref, shallowRef, watch, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
 import ConversationCard from './widgets/conversation/ConversationCard.vue';
 import ConversationCardExpanded from 'dashboard/components-next/Conversation/ConversationCard/ConversationCardExpanded.vue';
+import ConversationHoverPreview from 'dashboard/components-next/Conversation/ConversationCard/ConversationHoverPreview.vue';
 import ContextMenu from 'dashboard/components/ui/ContextMenu.vue';
 import ConversationContextMenu from './widgets/conversation/contextMenu/Index.vue';
 
@@ -39,6 +40,41 @@ const deleteConversation = inject('deleteConversation');
 const showContextMenu = ref(false);
 const contextMenu = ref({ x: null, y: null });
 
+// --- Hover preview state (shared by both layouts) ---
+const HOVER_PREVIEW_DELAY = 600;
+// Grace period for the pointer to cross from the card into the preview.
+const HOVER_PREVIEW_CLOSE_DELAY = 200;
+const supportsHoverPreview = window.matchMedia('(hover: hover)').matches;
+const showHoverPreview = ref(false);
+const hoverPreviewAnchor = shallowRef(null);
+let hoverPreviewTimer = null;
+let hoverPreviewCloseTimer = null;
+
+const clearHoverPreviewTimers = () => {
+  clearTimeout(hoverPreviewTimer);
+  clearTimeout(hoverPreviewCloseTimer);
+  hoverPreviewTimer = null;
+  hoverPreviewCloseTimer = null;
+};
+
+const closeHoverPreview = () => {
+  clearHoverPreviewTimers();
+  showHoverPreview.value = false;
+};
+
+const scheduleHoverPreviewClose = () => {
+  clearHoverPreviewTimers();
+  hoverPreviewCloseTimer = setTimeout(
+    closeHoverPreview,
+    HOVER_PREVIEW_CLOSE_DELAY
+  );
+};
+
+const keepHoverPreviewOpen = () => {
+  clearTimeout(hoverPreviewCloseTimer);
+  hoverPreviewCloseTimer = null;
+};
+
 // Reset context menu state when the row is recycled to a different conversation.
 watch(
   () => props.source.id,
@@ -48,8 +84,11 @@ watch(
     }
     showContextMenu.value = false;
     contextMenu.value = { x: null, y: null };
+    closeHoverPreview();
   }
 );
+
+onUnmounted(clearHoverPreviewTimers);
 
 const currentChat = useMapGetter('getSelectedChat');
 const inboxesList = useMapGetter('inboxes/getInboxes');
@@ -65,6 +104,29 @@ const currentContact = computed(() =>
 );
 
 const isActiveChat = computed(() => currentChat.value.id === props.source.id);
+
+const canShowHoverPreview = computed(
+  () => supportsHoverPreview && !isActiveChat.value && !showContextMenu.value
+);
+
+const onCardMouseEnter = event => {
+  keepHoverPreviewOpen();
+  if (!canShowHoverPreview.value || showHoverPreview.value) return;
+  hoverPreviewAnchor.value = event.currentTarget;
+  clearHoverPreviewTimers();
+  hoverPreviewTimer = setTimeout(() => {
+    hoverPreviewTimer = null;
+    if (canShowHoverPreview.value) showHoverPreview.value = true;
+  }, HOVER_PREVIEW_DELAY);
+};
+
+watch(isActiveChat, isActive => {
+  if (isActive) closeHoverPreview();
+});
+
+watch(showContextMenu, isOpen => {
+  if (isOpen) closeHoverPreview();
+});
 
 const inbox = computed(() => {
   const inboxId = props.source.inbox_id;
@@ -94,6 +156,7 @@ const conversationPath = computed(() =>
 );
 
 const onCardClick = e => {
+  closeHoverPreview();
   const path = conversationPath.value;
   if (!path) return;
 
@@ -195,6 +258,8 @@ const onDeleteConversation = () => {
     @de-select-conversation="onExpandedSelect"
     @click="onCardClick"
     @contextmenu="openContextMenu"
+    @mouseenter="onCardMouseEnter"
+    @mouseleave="scheduleHoverPreviewClose"
   />
 
   <!-- Default (condensed) layout -->
@@ -212,6 +277,21 @@ const onDeleteConversation = () => {
     @contextmenu="openContextMenu"
     @select-conversation="selectConversation"
     @de-select-conversation="deSelectConversation"
+    @mouseenter="onCardMouseEnter"
+    @mouseleave="scheduleHoverPreviewClose"
+  />
+
+  <!-- Floating preview of the latest messages while hovering the card -->
+  <ConversationHoverPreview
+    v-if="showHoverPreview"
+    :conversation-id="source.id"
+    :contact="currentContact"
+    :inbox="inbox"
+    :anchor-el="hoverPreviewAnchor"
+    @close="closeHoverPreview"
+    @pointer-enter="keepHoverPreviewOpen"
+    @pointer-leave="scheduleHoverPreviewClose"
+    @open="onCardClick"
   />
 
   <!-- Shared context menu for both layouts -->
