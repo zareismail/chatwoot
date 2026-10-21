@@ -31,6 +31,10 @@ their own APK build.
   `/v1` path and failed with a 404, while every other Captain call worked. FAQs were
   saved but never became searchable, so the assistant and reply suggestions handed every
   question to an agent.
+- **Captain's usage-limit handoff ignored the assistant's handoff message.** When an
+  account ran out of Captain responses, the handoff always said "Transferring to another
+  agent for further assistance." in English. It now sends the handoff message set in the
+  assistant's System settings, like every other Captain handoff.
 
 ## 2026-10-12
 
