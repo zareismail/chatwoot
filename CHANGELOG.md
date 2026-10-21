@@ -21,6 +21,17 @@ their own APK build.
 
 ---
 
+## 2026-10-21
+
+### Backend — fixed
+
+- **Captain could not search its FAQs through a custom AI endpoint.** With the Captain
+  endpoint set to anything other than OpenAI's default — an OpenAI-compatible gateway
+  such as AvalAI (`https://api.avalai.ir`) — embeddings went to the endpoint without its
+  `/v1` path and failed with a 404, while every other Captain call worked. FAQs were
+  saved but never became searchable, so the assistant and reply suggestions handed every
+  question to an agent.
+
 ## 2026-10-12
 
 ### Dashboard — added
