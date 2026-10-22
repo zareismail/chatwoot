@@ -32,7 +32,15 @@ class ContactMergeAction
   end
 
   def merge_conversations
-    Conversation.where(contact_id: @mergee_contact.id).update(contact_id: @base_contact.id)
+    conversations = Conversation.where(contact_id: [@base_contact.id, @mergee_contact.id])
+    newest = conversations.order(:created_at, :id).last
+    return if newest.blank?
+
+    conversations.where.not(id: newest.id).find_each do |conversation|
+      conversation.messages.update_all(conversation_id: newest.id, inbox_id: newest.inbox_id) # rubocop:disable Rails/SkipsModelValidations
+      conversation.destroy!
+    end
+    newest.update!(contact_id: @base_contact.id)
   end
 
   def merge_contact_notes

@@ -21,6 +21,20 @@ their own APK build.
 
 ---
 
+## 2026-10-22
+
+### Backend — fixed
+
+- **A returning visitor could not be identified when two of their contacts both had a
+  conversation.** Opening the widget as a signed-in user creates a fresh anonymous
+  contact, and `set_user` then merges it into the contact that already carries the
+  user's identifier. Since a contact is limited to one conversation, the merge tried to
+  give the kept contact a second one and the database rejected it: `set_user` returned a
+  500 (Sentry CHATWOOT-37, 94 users) and the user stayed unidentified on every visit. The
+  merge now keeps the newest of the two conversations for the kept contact, moves the
+  older conversation's messages into it and removes the emptied one. Needs a deploy of
+  the `app` and `sidekiq` pods.
+
 ## 2026-10-12
 
 ### Dashboard — added
