@@ -8,6 +8,7 @@ const {
 } = require('@egoist/tailwindcss-icons');
 
 const defaultSansFonts = [
+  'IRANSansX',
   '-apple-system',
   'system-ui',
   'BlinkMacSystemFont',
@@ -41,8 +42,8 @@ const tailwindConfig = {
     extend: {
       fontFamily: {
         sans: defaultSansFonts,
-        inter: ['Inter', ...defaultSansFonts],
-        interDisplay: ['InterDisplay', ...defaultSansFonts],
+        inter: ['IRANSansX', 'Inter', ...defaultSansFonts],
+        interDisplay: ['IRANSansX', 'InterDisplay', ...defaultSansFonts],
       },
       fontWeight: {
         420: '420',

@@ -21,6 +21,22 @@ their own APK build.
 
 ---
 
+## 2026-11-15
+
+### Dashboard — changed
+
+- **The dashboard uses IRANSans X.** Persian and English text in the agent dashboard is
+  now drawn in IRANSans X instead of Inter for English and whatever system font the
+  browser had for Persian (usually Tahoma or Segoe UI). Digits show as typed: Latin digits
+  stay Latin.
+
+### Widget — changed
+
+- **The live-chat widget uses IRANSans X instead of Dana**, so the widget and the dashboard
+  look the same. Unlike Dana FaNum, digits are no longer forced to Persian: a number typed
+  with Latin digits, such as a phone number or a code, now shows with Latin digits. This
+  also applies to the widget inside the Android app once the new image is deployed.
+
 ## 2026-11-12
 
 ### Dashboard — added
