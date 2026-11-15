@@ -21,6 +21,27 @@ their own APK build.
 
 ---
 
+## 2026-11-12
+
+### Dashboard — added
+
+- **Bulk messages can carry labels.** The "Send a bulk message" dialog has a new Labels
+  field. Every label picked there is added to each recipient's conversation, alongside the
+  labels it already has, so a group send can be found later by filtering on that label.
+  Labels are picked from the same colored dropdown as on a contact's profile.
+  Administrators also get a "Create label" button that opens the full label form — name,
+  description, color and "show on sidebar" — and selects the new label; agents can only
+  pick existing labels, since only administrators may create labels.
+  Group messages sent before this change are not labelled — nothing recorded which
+  messages belonged to which send.
+
+### Dashboard — fixed
+
+- **The bulk message dialog was in English in the Persian dashboard.** It now has
+  Persian strings.
+- **A failed bulk send always showed the generic error.** It now shows the server's
+  reason, such as a label that no longer exists.
+
 ## 2026-10-22
 
 ### Backend — fixed

@@ -6,24 +6,32 @@ import { required, minLength } from '@vuelidate/validators';
 import { DirectUpload } from 'activestorage';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
+import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
+import LabelItem from 'dashboard/components-next/label/LabelItem.vue';
+import CreateLabelDialog from './CreateLabelDialog.vue';
 
 import BulkMessagesAPI from 'dashboard/api/bulkMessages';
 
 const { t } = useI18n();
+const { isAdmin } = useAdmin();
 
 const accountId = useMapGetter('getCurrentAccountId');
 const currentUser = useMapGetter('getCurrentUser');
 const websiteInboxes = useMapGetter('inboxes/getWebsiteInboxes');
+const accountLabels = useMapGetter('labels/getLabels');
 
 const initialState = {
   inboxId: null,
   content: '',
   phoneNumbers: '',
+  labels: [],
 };
 
 const state = reactive({ ...initialState });
@@ -47,6 +55,41 @@ const inboxOptions = computed(() =>
     label: inbox.name,
   }))
 );
+
+const selectedLabels = computed(() =>
+  (accountLabels.value || []).filter(label =>
+    state.labels.includes(label.title)
+  )
+);
+
+const labelMenuItems = computed(() =>
+  (accountLabels.value || []).map(label => ({
+    label: label.title,
+    value: label.title,
+    thumbnail: { name: label.title, color: label.color },
+    isSelected: state.labels.includes(label.title),
+    action: 'toggleLabel',
+  }))
+);
+
+const showLabelDropdown = ref(false);
+const hoveredLabel = ref(null);
+const createLabelDialogRef = ref(null);
+
+const toggleLabel = ({ value }) => {
+  state.labels = state.labels.includes(value)
+    ? state.labels.filter(title => title !== value)
+    : [...state.labels, value];
+  showLabelDropdown.value = false;
+};
+
+const removeLabel = label => {
+  state.labels = state.labels.filter(title => title !== label.title);
+};
+
+const handleLabelCreated = title => {
+  if (!state.labels.includes(title)) state.labels = [...state.labels, title];
+};
 
 const phoneNumberCount = computed(() => {
   return state.phoneNumbers
@@ -86,7 +129,10 @@ const uploadFile = attachment => {
     `/api/v1/accounts/${accountId.value}/direct_uploads`,
     {
       directUploadWillCreateBlobWithXHR: xhr => {
-        xhr.setRequestHeader('api_access_token', currentUser.value.access_token);
+        xhr.setRequestHeader(
+          'api_access_token',
+          currentUser.value.access_token
+        );
       },
     }
   );
@@ -113,7 +159,7 @@ const handleFileChange = () => {
 };
 
 const resetState = () => {
-  Object.assign(state, initialState);
+  Object.assign(state, { ...initialState, labels: [] });
   attachments.value = [];
   if (fileInput.value) fileInput.value.value = null;
   v$.value.$reset();
@@ -136,12 +182,17 @@ const handleSubmit = async () => {
       inbox_id: state.inboxId,
       content: state.content,
       phone_numbers: state.phoneNumbers,
-      attachments: attachments.value.map(attachment => attachment.signedId).filter(Boolean),
+      attachments: attachments.value
+        .map(attachment => attachment.signedId)
+        .filter(Boolean),
+      labels: state.labels,
     });
     useAlert(t('BULK_MESSAGE.FORM.API.SUCCESS_MESSAGE'));
     close();
   } catch (error) {
-    useAlert(error?.response?.message || t('BULK_MESSAGE.FORM.API.ERROR_MESSAGE'));
+    useAlert(
+      error?.response?.data?.error || t('BULK_MESSAGE.FORM.API.ERROR_MESSAGE')
+    );
   } finally {
     isSending.value = false;
   }
@@ -162,7 +213,10 @@ defineExpose({ open, close });
     @close="resetState"
   >
     <div class="flex flex-col gap-1">
-      <label for="bulk-message-inbox" class="mb-0.5 text-sm font-medium text-n-slate-12">
+      <label
+        for="bulk-message-inbox"
+        class="mb-0.5 text-sm font-medium text-n-slate-12"
+      >
         {{ t('BULK_MESSAGE.FORM.INBOX.LABEL') }}
       </label>
       <ComboBox
@@ -207,8 +261,13 @@ defineExpose({ open, close });
             class="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-n-alpha-2 text-n-slate-12 border border-n-weak"
           >
             <span class="i-lucide-file size-3 text-n-slate-10 shrink-0" />
-            <span class="truncate max-w-[10rem]">{{ attachment.file.name }}</span>
-            <span v-if="attachment.isUploading" class="text-n-slate-10 shrink-0">
+            <span class="truncate max-w-[10rem]">{{
+              attachment.file.name
+            }}</span>
+            <span
+              v-if="attachment.isUploading"
+              class="text-n-slate-10 shrink-0"
+            >
               {{ t('BULK_MESSAGE.FORM.ATTACHMENT.UPLOADING') }}
             </span>
             <button
@@ -234,8 +293,78 @@ defineExpose({ open, close });
       v-model="state.phoneNumbers"
       :label="t('BULK_MESSAGE.FORM.PHONE_NUMBERS.LABEL')"
       :placeholder="t('BULK_MESSAGE.FORM.PHONE_NUMBERS.PLACEHOLDER')"
-      :message="formErrors.phoneNumbers || t('BULK_MESSAGE.FORM.PHONE_NUMBERS.COUNT', { count: phoneNumberCount })"
+      :message="
+        formErrors.phoneNumbers ||
+        t('BULK_MESSAGE.FORM.PHONE_NUMBERS.COUNT', { count: phoneNumberCount })
+      "
       :message-type="formErrors.phoneNumbers ? 'error' : 'info'"
+    />
+
+    <div class="flex flex-col gap-1">
+      <label class="mb-0.5 text-sm font-medium text-n-slate-12">
+        {{ t('BULK_MESSAGE.FORM.LABELS.LABEL') }}
+      </label>
+      <div
+        class="flex flex-wrap items-center gap-2"
+        @keydown.enter.prevent
+        @mouseleave="hoveredLabel = null"
+      >
+        <LabelItem
+          v-for="label in selectedLabels"
+          :key="label.id"
+          :label="label"
+          :is-hovered="hoveredLabel === label.id"
+          @remove="removeLabel"
+          @hover="hoveredLabel = label.id"
+        />
+        <div
+          v-on-clickaway="() => (showLabelDropdown = false)"
+          class="relative"
+        >
+          <button
+            type="button"
+            class="flex items-center gap-1 px-2 py-1 rounded-md outline-dashed h-6 outline-1 outline-n-slate-6 hover:bg-n-alpha-2"
+            :class="{ 'bg-n-alpha-2': showLabelDropdown }"
+            @click="showLabelDropdown = !showLabelDropdown"
+          >
+            <span class="i-lucide-plus" />
+            <span class="text-sm text-n-slate-11">
+              {{ t('BULK_MESSAGE.FORM.LABELS.ADD_BUTTON') }}
+            </span>
+          </button>
+          <DropdownMenu
+            v-if="showLabelDropdown"
+            :menu-items="labelMenuItems"
+            show-search
+            class="z-[100] w-48 mt-2 ltr:left-0 rtl:right-0 top-full max-h-52"
+            @action="toggleLabel"
+          >
+            <template #thumbnail="{ item }">
+              <div
+                class="rounded-sm size-2"
+                :style="{ backgroundColor: item.thumbnail.color }"
+              />
+            </template>
+          </DropdownMenu>
+        </div>
+        <Button
+          v-if="isAdmin"
+          type="button"
+          ghost
+          slate
+          xs
+          icon="i-lucide-tag"
+          :label="t('BULK_MESSAGE.FORM.LABELS.CREATE_BUTTON')"
+          @click="createLabelDialogRef?.open()"
+        />
+      </div>
+      <span class="text-xs text-n-slate-11">
+        {{ t('BULK_MESSAGE.FORM.LABELS.HINT') }}
+      </span>
+    </div>
+    <CreateLabelDialog
+      ref="createLabelDialogRef"
+      @created="handleLabelCreated"
     />
   </Dialog>
 </template>

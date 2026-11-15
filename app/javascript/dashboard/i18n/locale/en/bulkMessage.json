@@ -25,6 +25,12 @@
         "ERROR": "At least one phone number is required",
         "COUNT": "{count} phone number(s) entered"
       },
+      "LABELS": {
+        "LABEL": "Labels",
+        "ADD_BUTTON": "Add label",
+        "HINT": "Added to each recipient's conversation",
+        "CREATE_BUTTON": "Create label"
+      },
       "BUTTONS": {
         "SEND": "Send"
       },

@@ -1,7 +1,7 @@
 class BulkMessages::SendJob < ApplicationJob
   queue_as :low
 
-  def perform(account_id:, inbox_id:, sender_id:, content:, phone_numbers:, content_attributes: {}, attachment_signed_ids: [])
+  def perform(account_id:, inbox_id:, sender_id:, content:, phone_numbers:, content_attributes: {}, attachment_signed_ids: [], labels: [])
     account = Account.find(account_id)
     inbox = account.inboxes.find(inbox_id)
     sender = account.users.find_by(id: sender_id)
@@ -20,7 +20,7 @@ class BulkMessages::SendJob < ApplicationJob
       matched_count += 1
       begin
         deliver(contact: contact, inbox: inbox, sender: sender, content: content,
-                content_attributes: content_attributes, attachment_signed_ids: attachment_signed_ids)
+                content_attributes: content_attributes, attachment_signed_ids: attachment_signed_ids, labels: labels)
         Rails.logger.info("[BulkMessages::SendJob] delivered to contact=#{contact.id} phone_number=#{raw_number}")
       rescue StandardError => e
         Rails.logger.error("[BulkMessages::SendJob] failed for contact=#{contact.id} phone_number=#{raw_number}: #{e.class}: #{e.message}")
@@ -60,7 +60,7 @@ class BulkMessages::SendJob < ApplicationJob
     account.contacts.where('phone_number LIKE ?', "%#{national_number}").first
   end
 
-  def deliver(contact:, inbox:, sender:, content:, content_attributes:, attachment_signed_ids:)
+  def deliver(contact:, inbox:, sender:, content:, content_attributes:, attachment_signed_ids:, labels:)
     contact_inbox = contact.contact_inboxes.find_by(inbox_id: inbox.id) || ContactInboxBuilder.new(contact: contact, inbox: inbox).perform
     conversation = find_or_create_conversation(contact_inbox)
 
@@ -73,6 +73,7 @@ class BulkMessages::SendJob < ApplicationJob
         attachments: attachment_signed_ids
       )
     ).perform
+    conversation.add_labels(labels)
   end
 
   # Always reuse the contact's existing conversation on this inbox, regardless of the

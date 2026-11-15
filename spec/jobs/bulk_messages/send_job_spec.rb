@@ -31,6 +31,21 @@ RSpec.describe BulkMessages::SendJob do
     end
   end
 
+  context 'when labels are given' do
+    let(:contact) { create(:contact, account: account, phone_number: '+15553334444') }
+    let(:contact_inbox) { create(:contact_inbox, contact: contact, inbox: inbox) }
+    let!(:conversation) { create(:conversation, account: account, inbox: inbox, contact: contact, contact_inbox: contact_inbox) }
+
+    before { conversation.update_labels(['existing']) }
+
+    it 'adds them to the conversation and keeps its existing labels' do
+      described_class.perform_now(account_id: account.id, inbox_id: inbox.id, sender_id: sender.id, content: 'Hi',
+                                  phone_numbers: contact.phone_number, labels: ['promo'])
+
+      expect(conversation.reload.label_list).to contain_exactly('existing', 'promo')
+    end
+  end
+
   context 'when a contact has an existing open conversation' do
     let(:contact) { create(:contact, account: account, phone_number: '+15551112222') }
     let(:contact_inbox) { create(:contact_inbox, contact: contact, inbox: inbox) }
