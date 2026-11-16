@@ -21,6 +21,14 @@ their own APK build.
 
 ---
 
+## 2026-11-16
+
+### Dashboard — fixed
+
+- **Bulk message can be sent again.** Since labels were added to the bulk message form,
+  its Send button stayed disabled even with an inbox, a message and phone numbers filled
+  in, because the empty name field of the hidden "create label" form counted against it.
+
 ## 2026-11-15
 
 ### Dashboard — changed

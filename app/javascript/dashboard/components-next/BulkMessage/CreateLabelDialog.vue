@@ -26,7 +26,7 @@ const state = reactive({
   showOnSidebar: true,
 });
 
-const v$ = useVuelidate(validations, state);
+const v$ = useVuelidate(validations, state, { $stopPropagation: true });
 
 const isCreating = ref(false);
 const dialogRef = ref(null);
